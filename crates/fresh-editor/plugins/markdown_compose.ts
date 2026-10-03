@@ -79,14 +79,23 @@ function activeComposeWidth(): number | null {
 // When true, compose/preview mode is automatically enabled for all open and
 // newly opened markdown buffers.  Toggled by the "Toggle Compose/Preview
 // (All Files)" command.  Persisted across sessions via global plugin state.
+type FrescoMarkdownApi = {
+  defaultCompose: boolean;
+  isSourceEditing?: (bufferId: number) => boolean;
+  setComposeDefault?: (value: boolean) => boolean;
+};
 function getGlobalComposeEnabled(): boolean {
-  const saved = editor.getGlobalState("globalComposeEnabled") as boolean | null;
-  // Fresco owns its default; the upstream compose plugin remains usable alone.
-  const fresco = editor.getPluginApi("fresco-markdown") as { defaultCompose: boolean } | null;
-  return saved ?? fresco?.defaultCompose ?? false;
+  const fresco = editor.getPluginApi("fresco-markdown") as FrescoMarkdownApi | null;
+  if (fresco) {
+    const native = editor.getConfig() as { markdown?: { compose?: boolean } } | null;
+    return native?.markdown?.compose ?? fresco.defaultCompose;
+  }
+  return (editor.getGlobalState("globalComposeEnabled") as boolean) ?? false;
 }
 function setGlobalComposeEnabled(value: boolean): void {
-  editor.setGlobalState("globalComposeEnabled", value);
+  const fresco = editor.getPluginApi("fresco-markdown") as FrescoMarkdownApi | null;
+  if (fresco?.setComposeDefault) fresco.setComposeDefault(value);
+  else editor.setGlobalState("globalComposeEnabled", value);
 }
 
 // Helper: check whether the active split has compose mode for this buffer
@@ -3436,6 +3445,11 @@ editor.on("buffer_activated", (data) => {
   const info = editor.getBufferInfo(bufferId);
   if (!info || !isMarkdownFile(info.path)) return;
 
+  const fresco = editor.getPluginApi("fresco-markdown") as FrescoMarkdownApi | null;
+  if (fresco?.isSourceEditing?.(bufferId)) {
+    if (info.view_mode === "compose") disableMarkdownCompose(bufferId);
+    return;
+  }
   if (info.view_mode === "compose") {
     // Restore config.composeWidth from the persisted session value
     // before enabling compose mode, so enableMarkdownCompose uses

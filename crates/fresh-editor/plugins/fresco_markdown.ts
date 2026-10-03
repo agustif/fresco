@@ -1,31 +1,56 @@
 /// <reference path="./lib/fresh.d.ts" />
-// Fresco's read-only live Markdown reader. Source buffers remain the editing authority.
+// Native Markdown preferences own behavior; source buffers own editable content.
 const editor = getEditor();
-editor.exportPluginApi("fresco-markdown", { defaultCompose: true });
-editor.defineConfigBoolean("autoPreviewMermaid", {
-  default: true,
-  description: "Automatically open the live preview when first viewing a Markdown file containing Mermaid diagrams.",
-});
-
+const READER_MODE = "fresco-markdown-preview";
+const MAX_BYTES = 256 * 1024;
+interface MarkdownSettings {
+  auto_preview: "all" | "mermaid" | "off";
+  default_view: "preview" | "split" | "edit";
+  preview_layout: "auto" | "side_by_side" | "stacked";
+  heading_style: "large" | "compact";
+  compose: boolean;
+}
+function settings(): MarkdownSettings {
+  const config = editor.getConfig() as { markdown?: Partial<MarkdownSettings> } | null;
+  return { auto_preview: "all", default_view: "preview", preview_layout: "auto", heading_style: "large", compose: true, ...config?.markdown };
+}
 interface Preview {
   source: number;
   buffer: number;
   split: number;
+  sourceSplit: number;
   revision: number;
   width: number;
 }
 const previews = new Map<number, Preview>();
 const opening = new Set<number>();
 const autoConsidered = new Set<number>();
+const editing = new Set<number>();
 const dirty = new Set<number>();
-const MAX_BYTES = 256 * 1024;
 let timer: number | null = null;
-
+let appliedSettings = settings();
+const isMarkdown = (path: string): boolean => /\.(md|markdown|mdown)$/i.test(path);
+const isInsertMode = (): boolean => /(^|[-_])insert$/.test(editor.getInputMode() ?? "");
+function activePreview(): Preview | undefined {
+  const active = editor.getActiveBufferId();
+  return previews.get(active) ?? [...previews.values()].find((item) => item.buffer === active);
+}
+function publishApi(): void {
+  editor.exportPluginApi("fresco-markdown", {
+    defaultCompose: settings().compose,
+    isSourceEditing: (id: number) => editing.has(id),
+    setComposeDefault: (value: boolean) => savePreference("compose", value),
+  });
+}
+function updateContext(): void {
+  const info = editor.getBufferInfo(editor.getActiveBufferId());
+  editor.setContext("fresco-markdown", !!activePreview() || (!!info && isMarkdown(info.path)));
+  editor.setContext("fresco-markdown-reader", [...previews.values()].some((item) => item.buffer === editor.getActiveBufferId()));
+}
 function previewWidth(preview: Preview): number {
   const split = editor.listSplits().find((item) => item.splitId === preview.split);
   return Math.max(20, Math.min(240, (split?.viewport.width ?? 80) - 2));
 }
-
 async function refresh(preview: Preview): Promise<void> {
   const revision = ++preview.revision;
   try {
@@ -35,17 +60,15 @@ async function refresh(preview: Preview): Promise<void> {
     const source = await editor.getBufferText(preview.source);
     if (revision !== preview.revision || previews.get(preview.source) !== preview) return;
     preview.width = previewWidth(preview);
-    const entries = editor.renderMarkdownPreview(source, preview.width);
-    editor.setVirtualBufferContent(preview.buffer, entries);
+    editor.setVirtualBufferContent(preview.buffer, editor.renderMarkdownPreview(source, preview.width, settings().heading_style));
   } catch (error) {
-    editor.debug(`Fresco Markdown preview failed: ${String(error)}`);
+    editor.debug(`Markdown preview failed: ${String(error)}`);
     if (revision === preview.revision && previews.get(preview.source) === preview) {
       editor.setVirtualBufferContent(preview.buffer, [{ text: `Preview unavailable\n\n${String(error)}\n` }]);
-      editor.setStatus(`Fresco Markdown: ${String(error)}`);
+      editor.setStatus(`Markdown: ${String(error)}`);
     }
   }
 }
-
 async function flush(): Promise<void> {
   timer = null;
   const sources = [...dirty];
@@ -56,94 +79,187 @@ async function flush(): Promise<void> {
   }
 }
 registerHandler("frescoMarkdownRefresh", flush);
-
 function schedule(source: number): void {
   const preview = previews.get(source);
   if (!preview) return;
-  // Invalidate any pending asynchronous buffer read before scheduling its replacement.
   preview.revision++;
   dirty.add(source);
   if (timer !== null) editor.clearInterval(timer);
   timer = editor.setTimeout(180, "frescoMarkdownRefresh");
 }
-
-async function openPreview(): Promise<void> {
-  const active = editor.getActiveBufferId();
-  const existing = previews.get(active) ?? [...previews.values()].find((p) => p.buffer === active);
-  if (existing && editor.getBufferInfo(existing.buffer)) {
-    editor.focusSplit(existing.split);
-    await refresh(existing);
+async function returnSource(): Promise<void> {
+  const preview = activePreview();
+  if (!preview) {
+    const active = editor.getActiveBufferId();
+    const info = editor.getBufferInfo(active);
+    if (info && isMarkdown(info.path)) {
+      editing.add(active);
+      autoConsidered.add(active);
+      editor.setViewMode(active, "source");
+    }
     return;
   }
-  const info = editor.getBufferInfo(active);
-  if (!info || !/\.(md|markdown|mdown)$/i.test(info.path)) {
-    editor.setStatus("Open a Markdown file, then run Fresco Markdown: Open Live Preview.");
-    return;
+  if (!editor.getBufferInfo(preview.source)) return;
+  const property = editor.getTextPropertiesAtCursor(preview.buffer).find((entry) => typeof entry.sourceLine === "number");
+  editing.add(preview.source);
+  autoConsidered.add(preview.source);
+  const originalSplit = editor.listSplits().find((item) => item.splitId === preview.sourceSplit);
+  const split = originalSplit?.splitId ?? preview.split;
+  if (originalSplit) editor.setSplitBuffer(split, preview.source);
+  else editor.moveBufferToSplit(preview.source, split);
+  editor.focusSplit(split);
+  editor.setViewMode(preview.source, "source");
+  await editor.flush();
+  if (editor.getActiveBufferId() !== preview.source) return;
+  const line = property?.sourceLine;
+  if (typeof line === "number" && Number.isSafeInteger(line) && line >= 0) {
+    const position = await editor.getLineStartPosition(line);
+    if (position !== null && editor.getActiveBufferId() === preview.source) editor.setBufferCursor(preview.source, position);
   }
-  if (info.length > MAX_BYTES) {
-    editor.setStatus("Preview is limited to 256 KiB; compose mode remains available.");
-    return;
-  }
-  if (opening.has(active)) return;
-  opening.add(active);
-  try {
-    const result = await editor.createVirtualBufferInSplit({
-      name: `Preview: ${info.path.split(/[\\/]/).pop()}`,
-      direction: "vertical", ratio: 0.5,
-      readOnly: true, editingDisabled: true, showLineNumbers: false,
-      showCursors: false, lineWrap: true,
-      entries: [{ text: "Rendering Markdown…\n" }],
-    });
-    if (result.splitId === null) throw new Error("Could not create preview split");
-    const preview: Preview = { source: active, buffer: result.bufferId, split: result.splitId, revision: 0, width: 0 };
-    previews.set(active, preview);
-    await refresh(preview);
-  } catch (error) {
-    editor.setStatus(`Fresco Markdown: ${String(error)}`);
-    editor.debug(`Fresco Markdown could not open preview: ${String(error)}`);
-  } finally {
-    opening.delete(active);
-  }
+  updateContext();
 }
-registerHandler("frescoMarkdownOpen", openPreview);
-editor.registerCommand(
-  "Fresco Markdown: Open Live Preview",
-  "Read Markdown with styled headings, tables, math, and Mermaid text diagrams; updates as you edit",
-  "frescoMarkdownOpen",
-);
-
-// Consider each source once. Closing its preview is a deliberate choice and
-// returning to the source pane must never reopen it or steal editing focus.
+async function closePreview(): Promise<void> {
+  const preview = activePreview();
+  if (!preview) return;
+  await returnSource();
+  preview.revision++;
+  previews.delete(preview.source);
+  dirty.delete(preview.source);
+  // Only remove a dedicated reader pane; other tabs in that pane belong to the user.
+  const occupants = editor.listBuffers().filter((buffer) => buffer.splits.includes(preview.split));
+  if (preview.split !== preview.sourceSplit && occupants.length === 1 && occupants[0].id === preview.buffer) editor.closeSplit(preview.split);
+  editor.closeBuffer(preview.buffer);
+  updateContext();
+}
+async function openPreview(forceSplit = false): Promise<void> {
+  if (isInsertMode()) {
+    await returnSource();
+    editor.setStatus("Markdown: leave insert mode to open the reader.");
+    return;
+  }
+  const active = editor.getActiveBufferId();
+  const existing = activePreview();
+  if (existing && editor.getBufferInfo(existing.buffer)) {
+    const visible = editor.listSplits().find((split) => split.bufferId === existing.buffer);
+    if (visible && !(forceSplit && existing.split === existing.sourceSplit)) {
+      existing.split = visible.splitId;
+      editor.focusSplit(existing.split);
+      await refresh(existing);
+      return;
+    }
+    // A hidden reader tab can be reopened in its original pane without duplicating it.
+    const info = editor.getBufferInfo(existing.buffer);
+    const owner = editor.listSplits().find((split) => info?.splits.includes(split.splitId));
+    if (owner && !forceSplit) {
+      existing.split = owner.splitId;
+      editing.delete(existing.source);
+      editor.setSplitBuffer(owner.splitId, existing.buffer);
+      editor.focusSplit(owner.splitId);
+      await refresh(existing);
+      return;
+    }
+    if (active === existing.buffer) await returnSource();
+    previews.delete(existing.source);
+    editor.closeBuffer(existing.buffer);
+    await editor.flush();
+  }
+  const source = existing?.source ?? active;
+  const info = editor.getBufferInfo(source);
+  if (!info || !isMarkdown(info.path)) {
+    editor.setStatus("Open a Markdown file, then choose Markdown: Open Preview.");
+    return;
+  }
+  if (info.length > MAX_BYTES) { editor.setStatus("Preview is limited to 256 KiB; compose mode remains available."); return; }
+  if (opening.has(source)) return;
+  opening.add(source);
+  autoConsidered.add(source);
+  editing.delete(source);
+  const sourceSplit = editor.getActiveSplitId();
+  try {
+    const config = settings();
+    const splitReader = forceSplit || config.default_view === "split";
+    const base = { name: `Preview: ${info.path.split(/[\\/]/).pop()}`, mode: READER_MODE,
+      readOnly: true, editingDisabled: true, showLineNumbers: false, showCursors: false,
+      entries: [{ text: "Rendering Markdown…\n" }] };
+    const horizontal = config.preview_layout === "stacked" || (config.preview_layout === "auto" && (editor.getViewport()?.width ?? 80) < 124);
+    const result = splitReader
+      ? await editor.createVirtualBufferInSplit({ ...base, direction: horizontal ? "horizontal" : "vertical", ratio: 0.5, lineWrap: true })
+      : await editor.createVirtualBuffer({ ...base, splitId: sourceSplit, highlightCurrentLine: false });
+    const split = result.splitId ?? sourceSplit;
+    editor.setLineWrap(result.bufferId, split, true);
+    const preview: Preview = { source, buffer: result.bufferId, split, sourceSplit, revision: 0, width: 0 };
+    previews.set(source, preview);
+    await refresh(preview);
+    if (editing.has(source) || isInsertMode()) await returnSource();
+    updateContext();
+  } catch (error) {
+    editor.setStatus(`Markdown: ${String(error)}`);
+    editor.debug(`Markdown could not open preview: ${String(error)}`);
+  } finally { opening.delete(source); }
+}
 async function autoPreview(bufferId: number): Promise<void> {
-  const settings = editor.getPluginConfig() as { autoPreviewMermaid?: boolean } | null;
-  if (settings?.autoPreviewMermaid === false || autoConsidered.has(bufferId)) return;
+  const config = settings();
+  if (config.auto_preview === "off" || config.default_view === "edit" || isInsertMode() || autoConsidered.has(bufferId)) return;
   if (editor.getActiveBufferId() !== bufferId || previews.has(bufferId)) return;
   const info = editor.getBufferInfo(bufferId);
-  if (!info || !/\.(md|markdown|mdown)$/i.test(info.path) || info.length > MAX_BYTES) return;
+  if (!info || !isMarkdown(info.path) || info.length > MAX_BYTES) return;
   autoConsidered.add(bufferId);
   try {
     const source = await editor.getBufferText(bufferId);
-    if (editor.getActiveBufferId() !== bufferId) {
-      autoConsidered.delete(bufferId);
-      return;
-    }
-    if (!editor.getBufferInfo(bufferId) || previews.has(bufferId)) return;
-    if (/^ {0,3}(?:`{3,}|~{3,})mermaid\b/im.test(source)) await openPreview();
+    if (editor.getActiveBufferId() !== bufferId) { autoConsidered.delete(bufferId); return; }
+    if (!editor.getBufferInfo(bufferId) || previews.has(bufferId) || editing.has(bufferId) || isInsertMode()) return;
+    if (config.auto_preview === "all" || /^ {0,3}(?:`{3,}|~{3,})mermaid\b/im.test(source)) await openPreview();
   } catch (error) {
     autoConsidered.delete(bufferId);
-    editor.debug(`Fresco Markdown automatic preview failed: ${String(error)}`);
+    editor.debug(`Markdown automatic preview failed: ${String(error)}`);
   }
 }
+async function applySettings(): Promise<void> {
+  const next = settings();
+  if (next.auto_preview !== appliedSettings.auto_preview || next.default_view !== appliedSettings.default_view) autoConsidered.clear();
+  appliedSettings = next;
+  publishApi();
+  for (const source of previews.keys()) schedule(source);
+  await autoPreview(editor.getActiveBufferId());
+  updateContext();
+}
+function savePreference(key: keyof MarkdownSettings, value: unknown): boolean {
+  const queued = editor.saveSetting(`markdown.${key}`, value);
+  if (queued) editor.setTimeout(0, "frescoMarkdownApplySettings");
+  return queued;
+}
+registerHandler("frescoMarkdownOpen", () => openPreview());
+registerHandler("frescoMarkdownSplit", () => openPreview(true));
+registerHandler("frescoMarkdownReturnSource", returnSource);
+registerHandler("frescoMarkdownClose", closePreview);
+registerHandler("frescoMarkdownToggle", () => [...previews.values()].some((p) => p.buffer === editor.getActiveBufferId()) ? returnSource() : openPreview());
+registerHandler("frescoMarkdownToggleHeadings", () => savePreference("heading_style", settings().heading_style === "large" ? "compact" : "large"));
+registerHandler("frescoMarkdownSettings", () => editor.executeAction("open_settings"));
+registerHandler("frescoMarkdownApplySettings", applySettings);
 registerHandler("frescoMarkdownAutoOpen", () => autoPreview(editor.getActiveBufferId()));
-editor.on("buffer_activated", (event) => autoPreview(event.buffer_id));
+editor.defineMode(READER_MODE, [
+  ["Escape", "frescoMarkdownReturnSource"], ["i", "frescoMarkdownReturnSource"],
+  ["Insert", "frescoMarkdownReturnSource"], ["q", "frescoMarkdownClose"],
+], true, false, true);
+for (const [name, description, handler] of [
+  ["Open Preview", "Read the active Markdown document", "frescoMarkdownOpen"],
+  ["Open Split Preview", "Read Markdown beside its editable source", "frescoMarkdownSplit"],
+  ["Edit Source", "Return to editable Markdown at the reader's current location", "frescoMarkdownReturnSource"],
+  ["Toggle Preview", "Switch between Markdown reading and editing", "frescoMarkdownToggle"],
+  ["Toggle Large Headings", "Persist large or compact Markdown headings", "frescoMarkdownToggleHeadings"],
+  ["Settings", "Configure Markdown in the native Settings dialog", "frescoMarkdownSettings"],
+]) editor.registerCommand(`Markdown: ${name}`, description, handler);
+for (const [label, action, when] of [
+  ["Markdown Preview", "frescoMarkdownOpen", "fresco-markdown"],
+  ["Markdown Split Preview", "frescoMarkdownSplit", "fresco-markdown"],
+  ["Edit Markdown Source", "frescoMarkdownReturnSource", "fresco-markdown-reader"],
+  ["Markdown Heading Size", "frescoMarkdownToggleHeadings", "fresco-markdown"],
+  ["Markdown Settings", "frescoMarkdownSettings", ""],
+]) editor.addMenuItem({ menu: "View", label, action, ...(when ? { when } : {}) });
+editor.on("buffer_activated", (event) => { updateContext(); return autoPreview(event.buffer_id); });
 editor.on("after_file_open", (event) => autoPreview(event.buffer_id));
-editor.on("config_changed", () => {
-  autoConsidered.clear();
-  return autoPreview(editor.getActiveBufferId());
-});
-// Covers a file already active when the plugin loads, including session restore.
-editor.setTimeout(0, "frescoMarkdownAutoOpen");
-
+editor.on("config_changed", applySettings);
+editor.on("input_mode_changed", () => isInsertMode() ? returnSource() : undefined);
 editor.on("after_insert", (event) => schedule(event.buffer_id));
 editor.on("after_delete", (event) => schedule(event.buffer_id));
 editor.on("buffer_modified", (event) => schedule(event.buffer_id));
@@ -155,14 +271,17 @@ editor.on("viewport_changed", (event) => {
 });
 editor.on("buffer_closed", (event) => {
   autoConsidered.delete(event.buffer_id);
+  editing.delete(event.buffer_id);
   for (const [source, preview] of previews) {
     if (source === event.buffer_id || preview.buffer === event.buffer_id) {
       preview.revision++;
       previews.delete(source);
       dirty.delete(source);
-      if (source === event.buffer_id && editor.getBufferInfo(preview.buffer)) {
-        editor.setVirtualBufferContent(preview.buffer, [{ text: "Source closed. Reopen the Markdown file to start a new live preview.\n" }]);
-      }
+      if (source === event.buffer_id && editor.getBufferInfo(preview.buffer)) editor.setVirtualBufferContent(preview.buffer, [{ text: "Source closed. Reopen the Markdown file to start a new reader.\n" }]);
     }
   }
+  updateContext();
 });
+publishApi();
+updateContext();
+editor.setTimeout(0, "frescoMarkdownAutoOpen");

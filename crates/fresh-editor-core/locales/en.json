@@ -1,5 +1,8 @@
 {
   "_version": 1,
+  "markdown.context.preview": "Preview Markdown",
+  "markdown.context.split": "Preview in Split",
+  "markdown.context.edit": "Edit Markdown",
   "cli.about": "A terminal text editor with multi-cursor support",
   "cli.documentation": "Documentation",
   "cli.arg.cmd": "Run a command instead of opening files. Commands: daemon (alias: session) (list|attach|new|kill|open-file), config (show|paths), grammar (list), init (check|reload), command (run|list), update, script (api|check|run|types), help (tour|script|plugin)",

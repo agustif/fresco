@@ -162,6 +162,17 @@
         "file_tree_poll_interval_ms": 3000
       }
     },
+    "markdown": {
+      "description": "Markdown reading, editing, layout, and typography.",
+      "$ref": "#/$defs/MarkdownConfig",
+      "default": {
+        "auto_preview": "all",
+        "default_view": "preview",
+        "preview_layout": "auto",
+        "heading_style": "large",
+        "compose": true
+      }
+    },
     "file_explorer": {
       "description": "File explorer panel settings",
       "$ref": "#/$defs/FileExplorerConfig",
@@ -1250,6 +1261,113 @@
         "cr"
       ],
       "default": "lf"
+    },
+    "MarkdownConfig": {
+      "title": "Markdown",
+      "description": "Markdown reading, editing, layout, and typography.",
+      "type": "object",
+      "properties": {
+        "auto_preview": {
+          "description": "Automatically open a rendered reader: all documents, Mermaid documents only, or off.",
+          "$ref": "#/$defs/AutoPreview",
+          "default": "all"
+        },
+        "default_view": {
+          "description": "Start in a reader, split reader, or editable source.",
+          "$ref": "#/$defs/DefaultView",
+          "default": "preview"
+        },
+        "preview_layout": {
+          "description": "Reader arrangement. Auto preserves usable width by stacking panes in narrow terminals.",
+          "$ref": "#/$defs/PreviewLayout",
+          "default": "auto"
+        },
+        "heading_style": {
+          "description": "Large renders H1/H2 as terminal glyphs; compact uses normal-size headings.",
+          "$ref": "#/$defs/HeadingStyle",
+          "default": "large"
+        },
+        "compose": {
+          "description": "Use compose mode by default in editable Markdown panes. Turn off to show raw syntax.",
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "AutoPreview": {
+      "description": "Which Markdown documents automatically open a rendered reader.",
+      "oneOf": [
+        {
+          "description": "Open a reader for every Markdown document.",
+          "type": "string",
+          "const": "all"
+        },
+        {
+          "description": "Open a reader only for documents containing Mermaid fences.",
+          "type": "string",
+          "const": "mermaid"
+        },
+        {
+          "description": "Open readers only through the Markdown preview command.",
+          "type": "string",
+          "const": "off"
+        }
+      ]
+    },
+    "DefaultView": {
+      "description": "Initial presentation of Markdown documents eligible for automatic preview.",
+      "oneOf": [
+        {
+          "description": "Open a reader in the same pane; double-click or Insert returns to editable source.",
+          "type": "string",
+          "const": "preview"
+        },
+        {
+          "description": "Show a reader alongside the editable source.",
+          "type": "string",
+          "const": "split"
+        },
+        {
+          "description": "Start editing; the preview remains available from menus and commands.",
+          "type": "string",
+          "const": "edit"
+        }
+      ]
+    },
+    "PreviewLayout": {
+      "description": "Arrangement of editable source and rendered Markdown.",
+      "oneOf": [
+        {
+          "description": "Use side-by-side panes when each can fit 60 columns; otherwise stack them.",
+          "type": "string",
+          "const": "auto"
+        },
+        {
+          "description": "Put the reader beside the source.",
+          "type": "string",
+          "const": "side_by_side"
+        },
+        {
+          "description": "Put the reader below the source.",
+          "type": "string",
+          "const": "stacked"
+        }
+      ]
+    },
+    "HeadingStyle": {
+      "description": "Typography for headings in the rendered Markdown reader.",
+      "oneOf": [
+        {
+          "description": "Render H1/H2 with four-row terminal glyphs when they fit; retain readable text otherwise.",
+          "type": "string",
+          "const": "large"
+        },
+        {
+          "description": "Keep all headings at the terminal's normal character size.",
+          "type": "string",
+          "const": "compact"
+        }
+      ]
     },
     "FileExplorerConfig": {
       "description": "File explorer settings.",

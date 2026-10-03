@@ -2078,6 +2078,11 @@ fn content_leaf(id: LeafId, handle: super::buffer_host::PaneHandle, active: bool
         .on(
             GestureKind::Press,
             Rc::new(move |e: &Event| {
+                if e.button == MouseButton::Right {
+                    let (x, y) = at(e);
+                    e.stop();
+                    return Some(UiMsg::Ui(UiFact::PaneContentContext { pane: id, x, y }));
+                }
                 if e.button != MouseButton::Left {
                     return None;
                 }

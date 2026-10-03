@@ -13,6 +13,7 @@
 // Always available (needed for schema generation too).
 pub mod config;
 pub mod config_keys;
+pub mod markdown_config;
 pub mod partial_config;
 pub mod types;
 

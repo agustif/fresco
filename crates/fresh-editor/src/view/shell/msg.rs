@@ -311,6 +311,13 @@ pub enum UiFact {
         delta: i32,
     },
 
+    /// A right press retains the native pane target for its Markdown context menu.
+    PaneContentContext {
+        pane: LeafId,
+        x: u16,
+        y: u16,
+    },
+
     /// A left press on a pane's content, and which press of a run it is: one
     /// places the caret, two selects the word, three the line — or toggles a
     /// fold, when the cell is a folded line's gutter indicator.

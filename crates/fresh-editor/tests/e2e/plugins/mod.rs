@@ -41,6 +41,7 @@ pub mod diff_cursor;
 pub mod env_manager;
 pub mod file_explorer_slots;
 pub mod find_file;
+pub mod fresco_native_context;
 pub mod git;
 pub mod git_log_current_file;
 pub mod git_log_diff_highlight_offset;

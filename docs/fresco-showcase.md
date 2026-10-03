@@ -3,7 +3,7 @@
 A calm place to read **architecture**, write *ideas*, and inspect `code`.
 
 > The live preview opens automatically and renders these diagrams.
-> Reopen it with **Ctrl+P → Fresco Markdown: Open Live Preview** if you close it.
+> Reopen it with **Ctrl+P → Markdown: Open Preview** if you close it.
 > This gallery contains **24 diagrams** across five supported families.
 > Widen the preview pane if a diagram falls back to its source.
 

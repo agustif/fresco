@@ -50,7 +50,12 @@ fn get_xdg_log_dir() -> Option<PathBuf> {
 
     // Fall back to ~/.local/state
     if let Some(home) = home_dir() {
-        return Some(home.join(".local").join("state").join("fresco").join("logs"));
+        return Some(
+            home.join(".local")
+                .join("state")
+                .join("fresco")
+                .join("logs"),
+        );
     }
 
     None

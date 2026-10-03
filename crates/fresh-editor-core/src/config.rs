@@ -1,3 +1,4 @@
+pub use crate::markdown_config::MarkdownConfig;
 use crate::types::{context_keys, LspFeature, LspLanguageConfig, LspServerConfig, ProcessLimits};
 
 use fresh_i18n::t;
@@ -460,7 +461,7 @@ pub struct Config {
 
     /// Check for new versions on startup (default: false in Fresco).
     /// Also sends basic anonymous telemetry (version, OS, terminal type).
-    #[serde(default = "default_true")]
+    #[serde(default)]
     pub check_for_updates: bool,
 
     /// Offer to update from inside the editor when a new version is found (default: true).
@@ -479,6 +480,10 @@ pub struct Config {
     /// Editor behavior settings (indentation, line numbers, wrapping, etc.)
     #[serde(default)]
     pub editor: EditorConfig,
+
+    /// Markdown reading, editing, layout, and typography.
+    #[serde(default)]
+    pub markdown: MarkdownConfig,
 
     /// File explorer panel settings
     #[serde(default)]
@@ -2967,6 +2972,7 @@ impl Default for Config {
             self_update: true,
             orchestrator_mode: true,
             editor: EditorConfig::default(),
+            markdown: MarkdownConfig::default(),
             file_explorer: FileExplorerConfig::default(),
             sidebar: SidebarConfig::default(),
             file_browser: FileBrowserConfig::default(),

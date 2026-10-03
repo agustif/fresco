@@ -1206,9 +1206,14 @@ impl JsEditorApi {
         ctx: rquickjs::Ctx<'js>,
         source: String,
         width: u32,
+        heading_style: rquickjs::function::Opt<String>,
     ) -> rquickjs::Result<Value<'js>> {
-        let entries = crate::markdown_preview::render(&source, width)
-            .map_err(|message| rquickjs::Exception::throw_message(&ctx, message))?;
+        let entries = crate::markdown_preview::render(
+            &source,
+            width,
+            heading_style.0.as_deref() != Some("compact"),
+        )
+        .map_err(|message| rquickjs::Exception::throw_message(&ctx, message))?;
         rquickjs_serde::to_value(ctx, &entries)
             .map_err(|e| rquickjs::Error::new_from_js_message("serialize", "", e.to_string()))
     }

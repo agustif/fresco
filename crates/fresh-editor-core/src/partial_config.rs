@@ -80,6 +80,7 @@ pub struct PartialConfig {
     pub self_update: Option<bool>,
     pub orchestrator_mode: Option<bool>,
     pub editor: Option<PartialEditorConfig>,
+    pub markdown: Option<PartialMarkdownConfig>,
     pub file_explorer: Option<PartialFileExplorerConfig>,
     pub file_browser: Option<PartialFileBrowserConfig>,
     pub clipboard: Option<PartialClipboardConfig>,
@@ -101,6 +102,54 @@ pub struct PartialConfig {
     pub env: Option<crate::config::EnvConfig>,
 }
 
+/// Per-layer Markdown preferences; unspecified fields inherit independently.
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(default)]
+pub struct PartialMarkdownConfig {
+    pub auto_preview: Option<crate::markdown_config::AutoPreview>,
+    pub default_view: Option<crate::markdown_config::DefaultView>,
+    pub preview_layout: Option<crate::markdown_config::PreviewLayout>,
+    pub heading_style: Option<crate::markdown_config::HeadingStyle>,
+    pub compose: Option<bool>,
+}
+
+impl Merge for PartialMarkdownConfig {
+    fn merge_from(&mut self, other: &Self) {
+        self.auto_preview.merge_from(&other.auto_preview);
+        self.default_view.merge_from(&other.default_view);
+        self.preview_layout.merge_from(&other.preview_layout);
+        self.heading_style.merge_from(&other.heading_style);
+        self.compose.merge_from(&other.compose);
+    }
+}
+
+impl From<&crate::markdown_config::MarkdownConfig> for PartialMarkdownConfig {
+    fn from(config: &crate::markdown_config::MarkdownConfig) -> Self {
+        Self {
+            auto_preview: Some(config.auto_preview),
+            default_view: Some(config.default_view),
+            preview_layout: Some(config.preview_layout),
+            heading_style: Some(config.heading_style),
+            compose: Some(config.compose),
+        }
+    }
+}
+
+impl PartialMarkdownConfig {
+    pub fn resolve(
+        self,
+        defaults: &crate::markdown_config::MarkdownConfig,
+    ) -> crate::markdown_config::MarkdownConfig {
+        crate::markdown_config::MarkdownConfig {
+            auto_preview: self.auto_preview.unwrap_or(defaults.auto_preview),
+            default_view: self.default_view.unwrap_or(defaults.default_view),
+            preview_layout: self.preview_layout.unwrap_or(defaults.preview_layout),
+            heading_style: self.heading_style.unwrap_or(defaults.heading_style),
+            compose: self.compose.unwrap_or(defaults.compose),
+        }
+    }
+}
+
 impl Merge for PartialConfig {
     fn merge_from(&mut self, other: &Self) {
         self.version.merge_from(&other.version);
@@ -112,6 +161,7 @@ impl Merge for PartialConfig {
 
         // Nested structs: merge recursively
         merge_partial(&mut self.editor, &other.editor);
+        merge_partial(&mut self.markdown, &other.markdown);
         merge_partial(&mut self.file_explorer, &other.file_explorer);
         merge_partial(&mut self.file_browser, &other.file_browser);
         merge_partial(&mut self.clipboard, &other.clipboard);
@@ -1254,6 +1304,7 @@ impl From<&crate::config::Config> for PartialConfig {
             self_update: Some(cfg.self_update),
             orchestrator_mode: Some(cfg.orchestrator_mode),
             editor: Some(PartialEditorConfig::from(&cfg.editor)),
+            markdown: Some(PartialMarkdownConfig::from(&cfg.markdown)),
             file_explorer: Some(PartialFileExplorerConfig::from(&cfg.file_explorer)),
             file_browser: Some(PartialFileBrowserConfig::from(&cfg.file_browser)),
             clipboard: Some(PartialClipboardConfig::from(&cfg.clipboard)),
@@ -1442,6 +1493,24 @@ impl PartialConfig {
             result
         };
 
+        let partial_markdown = self.markdown.unwrap_or_default();
+        let migrate_preview = partial_markdown.auto_preview.is_none();
+        let mut markdown = partial_markdown.resolve(&defaults.markdown);
+        // Preserve the original plugin preference until a native setting is chosen.
+        if migrate_preview {
+            if let Some(previous) = plugins
+                .get("fresco_markdown")
+                .and_then(|plugin| plugin.settings.get("autoPreviewMermaid"))
+                .and_then(serde_json::Value::as_bool)
+            {
+                markdown.auto_preview = if previous {
+                    crate::markdown_config::AutoPreview::Mermaid
+                } else {
+                    crate::markdown_config::AutoPreview::Off
+                };
+            }
+        }
+
         let mut config = crate::config::Config {
             version: self.version.unwrap_or(defaults.version),
             theme: self.theme.unwrap_or_else(|| defaults.theme.clone()),
@@ -1451,6 +1520,7 @@ impl PartialConfig {
             check_for_updates: self.check_for_updates.unwrap_or(defaults.check_for_updates),
             self_update: self.self_update.unwrap_or(defaults.self_update),
             orchestrator_mode: self.orchestrator_mode.unwrap_or(defaults.orchestrator_mode),
+            markdown,
             editor: self
                 .editor
                 .map(|e| e.resolve(&defaults.editor))

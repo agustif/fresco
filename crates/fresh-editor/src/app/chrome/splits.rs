@@ -109,6 +109,12 @@ impl Editor {
         self.active_window_mut()
             .apply_event_to_buffer(buffer_id, leaf_id, &event);
 
+        let edit = crate::app::types::MarkdownContextAction::Edit;
+        if self.is_markdown_preview(buffer_id) && self.markdown_action_available(edit) {
+            self.active_window_mut().mouse_state.drag = None;
+            return self.execute_markdown_context_action(edit, buffer_id, split_id);
+        }
+
         // Now select the word under cursor
         self.handle_action(Action::SelectWord)?;
 
@@ -762,9 +768,17 @@ impl Editor {
         col: u16,
         row: u16,
     ) {
-        self.active_window_mut().tab_context_menu = target
-            .as_buffer()
-            .map(|buffer_id| TabContextMenu::new(buffer_id, pane, col, row + 1));
+        let menu = target.as_buffer().map(|buffer_id| {
+            let mut menu = TabContextMenu::new(buffer_id, pane, col, row + 1);
+            menu.items.extend(
+                self.markdown_context_actions(buffer_id)
+                    .into_iter()
+                    .map(crate::app::types::TabContextMenuItem::Markdown),
+            );
+            menu.menu.item_count = menu.items.len();
+            menu
+        });
+        self.active_window_mut().tab_context_menu = menu;
     }
 
     /// The `×` on a pane's strip.
@@ -967,6 +981,9 @@ impl Editor {
     ) -> AnyhowResult<()> {
         use crate::app::types::TabContextMenuItem;
         match item {
+            TabContextMenuItem::Markdown(action) => {
+                return self.execute_markdown_context_action(action, buffer_id, leaf_id);
+            }
             TabContextMenuItem::Close => {
                 self.close_tab_in_split(buffer_id, leaf_id);
             }

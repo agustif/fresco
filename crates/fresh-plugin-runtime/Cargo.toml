@@ -9,6 +9,9 @@ homepage.workspace = true
 description = "JavaScript plugin runtime for Fresh editor"
 
 [dependencies]
+tui-big-text = "0.8.10"
+font8x8 = { version = "0.3", default-features = false, features = ["unicode"] }
+pulldown-cmark = "0.13"
 xai-grok-markdown = { path = "../../vendor/xai-grok-markdown" }
 anstyle = "1.0"
 ratatui = { version = "0.30", default-features = false, features = ["std"] }

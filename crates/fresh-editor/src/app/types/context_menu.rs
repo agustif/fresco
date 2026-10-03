@@ -97,6 +97,8 @@ pub enum ContextMenuKind {
 /// Tab context menu items
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TabContextMenuItem {
+    /// Markdown reader/source actions for this buffer.
+    Markdown(MarkdownContextAction),
     /// Close this tab
     Close,
     /// Close all other tabs
@@ -136,6 +138,7 @@ impl TabContextMenuItem {
     /// Get the display label for this menu item
     pub fn label(&self) -> String {
         match self {
+            Self::Markdown(action) => action.label(),
             Self::Close => t!("tab.close").to_string(),
             Self::CloseOthers => t!("tab.close_others").to_string(),
             Self::CloseToRight => t!("tab.close_to_right").to_string(),
@@ -157,6 +160,8 @@ pub struct TabContextMenu {
     pub split_id: LeafId,
     /// Shared geometry + navigation core (position, highlight, width, items).
     pub menu: ContextMenu,
+    /// Items captured for the clicked buffer when the menu opens.
+    pub items: Vec<TabContextMenuItem>,
 }
 
 impl TabContextMenu {
@@ -165,6 +170,7 @@ impl TabContextMenu {
         Self {
             buffer_id,
             split_id,
+            items: TabContextMenuItem::all().to_vec(),
             menu: ContextMenu::new(
                 x,
                 y,
@@ -175,13 +181,13 @@ impl TabContextMenu {
     }
 
     /// The items this menu presents, in display order.
-    pub fn items(&self) -> &'static [TabContextMenuItem] {
-        TabContextMenuItem::all()
+    pub fn items(&self) -> &[TabContextMenuItem] {
+        &self.items
     }
 
     /// Get the currently highlighted item
     pub fn highlighted_item(&self) -> TabContextMenuItem {
-        TabContextMenuItem::all()[self.menu.highlighted]
+        self.items()[self.menu.highlighted]
     }
 }
 
@@ -305,6 +311,7 @@ impl CloseSplitMenu {
 /// File explorer context menu items
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FileExplorerContextMenuItem {
+    Markdown(MarkdownContextAction),
     NewFile,
     NewDirectory,
     Rename,
@@ -371,6 +378,7 @@ impl FileExplorerContextMenuItem {
             Self::Delete => t!("explorer.context.delete").to_string(),
             Self::CopyFullPath => t!("explorer.context.copy_full_path").to_string(),
             Self::CopyRelativePath => t!("explorer.context.copy_relative_path").to_string(),
+            Self::Markdown(action) => action.label(),
         }
     }
 }
@@ -384,6 +392,9 @@ pub struct FileExplorerContextMenu {
     pub is_root_selected: bool,
     /// Shared geometry + navigation core (position, highlight, width, items).
     pub menu: ContextMenu,
+    /// Markdown commands retain the clicked file and destination pane.
+    pub markdown_target: Option<(std::path::PathBuf, LeafId)>,
+    pub items: Vec<FileExplorerContextMenuItem>,
 }
 
 impl FileExplorerContextMenu {
@@ -392,6 +403,8 @@ impl FileExplorerContextMenu {
         Self {
             is_multi_selection,
             is_root_selected,
+            markdown_target: None,
+            items: Self::items_for(is_multi_selection, is_root_selected).to_vec(),
             menu: ContextMenu::new(x, y, FILE_EXPLORER_CONTEXT_MENU_WIDTH, item_count),
         }
     }
@@ -411,13 +424,39 @@ impl FileExplorerContextMenu {
         }
     }
 
-    pub fn items(&self) -> &'static [FileExplorerContextMenuItem] {
-        Self::items_for(self.is_multi_selection, self.is_root_selected)
+    pub fn items(&self) -> &[FileExplorerContextMenuItem] {
+        &self.items
     }
 
     /// Get the currently highlighted item.
     pub fn highlighted_item(&self) -> FileExplorerContextMenuItem {
         self.items()[self.menu.highlighted]
+    }
+}
+
+/// Native Markdown affordances share the plugin's named-handler contract.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MarkdownContextAction {
+    Preview,
+    Split,
+    Edit,
+}
+
+impl MarkdownContextAction {
+    pub fn handler(self) -> &'static str {
+        match self {
+            Self::Preview => "frescoMarkdownOpen",
+            Self::Split => "frescoMarkdownSplit",
+            Self::Edit => "frescoMarkdownReturnSource",
+        }
+    }
+
+    pub fn label(self) -> String {
+        match self {
+            Self::Preview => t!("markdown.context.preview").to_string(),
+            Self::Split => t!("markdown.context.split").to_string(),
+            Self::Edit => t!("markdown.context.edit").to_string(),
+        }
     }
 }
 

@@ -15,33 +15,49 @@ when building from source.
 
 ## Markdown
 
-Markdown files open in compose mode: centered text, hidden formatting markers,
-styled headings, framed code blocks, and table borders. Open the command palette
-with **Ctrl+P**, then choose **Markdown: Toggle Compose/Preview** to switch back
-to source mode. The all-files toggle persists your compose preference.
+Markdown now has native settings, menus, compose mode, and a rendered reader.
+Documents open in the read-only preview by default. **Ctrl+P** contains
+**Markdown: Open Preview**, **Markdown: Open Split Preview**, **Markdown: Edit
+Source**, **Markdown: Toggle Preview**, **Markdown: Toggle Large Headings**,
+and **Markdown: Settings**. Right-click Markdown in a pane, tab, or file explorer
+to preview or edit that exact document.
 
-Markdown files containing Mermaid automatically open a live reader alongside
-the editable source. You can also choose **Fresco Markdown: Open Live Preview**
-in the command palette. Disable automatic opening with **Plugin Settings →
-fresco_markdown → autoPreviewMermaid**. Closing a preview keeps it closed when
-you return to its source. This bundled
-plugin renders the whole document, including Mermaid fences, into a read-only
-pane. It refreshes after edits, undo/redo, saves, disk reloads, and pane resizes.
-Running the command again reuses the existing preview.
+The reader updates while the source changes. Double-click rendered text or press
+**Escape**, **i**, or **Insert** to edit at the corresponding source line. Split
+mode keeps the source and reader visible together. Choose the layout, default
+view, compose behavior, automatic-preview rule, and heading size under
+**Settings → Markdown**.
 
-```mermaid
-flowchart LR
-    A[Markdown source] --> B[Grok renderer]
-    B --> C[Fresco live preview]
+```json
+{
+  "markdown": {
+    "auto_preview": "all",
+    "default_view": "preview",
+    "preview_layout": "auto",
+    "heading_style": "large",
+    "compose": true
+  }
+}
 ```
 
-Supported diagrams include flowcharts, sequences, states, classes, and entity
-relationships. They render as Unicode box-drawing text in ordinary terminals.
-Unsupported diagrams retain their source in a frame. Large diagrams fall back
-when they exceed the engine's layout limits or available width. Preview input
-is limited to 256 KiB; the editor and compose mode remain available for larger files.
+`preview_layout: "auto"` places both panes side by side when each can fit
+60 columns; otherwise it stacks them. Use `"split"` for a visible editable
+source by default, or `"edit"` to open source directly. Set `auto_preview` to
+`"mermaid"` or `"off"` when you want fewer automatic readers. Set
+`heading_style` to `"compact"` for normal-sized headings. Compose mode formats
+the editable source pane; large preview headings use the `tui-big-text` 8×8
+font as four-row Unicode glyphs. Unsupported or too-wide headings stay readable
+as ordinary styled text.
 
-Try [the Markdown showcase](docs/fresco-showcase.md).
+The live reader renders flowcharts, sequences, states, classes, and ER diagrams
+as native terminal text. It uses the Grok-derived parser and runs without a
+browser, image protocol, or Node.js. Unsupported diagrams retain their source;
+large diagrams fall back when they exceed the layout limits or available width.
+Preview input is limited to 256 KiB.
+
+Run `fresco /Users/af/fresh/docs/fresco-showcase.md` to see the 24-diagram
+gallery. See [renderer provenance](vendor/PROVENANCE.md) for the vendored
+library and its licenses.
 
 ## Fork identity and compatibility
 

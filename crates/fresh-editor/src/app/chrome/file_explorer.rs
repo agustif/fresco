@@ -142,11 +142,52 @@ impl Editor {
         } else {
             (false, false)
         };
+        // Retain the actual row's file, rather than consulting selection at activation time.
+        let markdown_path = index
+            .and_then(|_| {
+                self.file_explorer()
+                    .as_ref()
+                    .and_then(|explorer| explorer.get_selected_entry())
+                    .filter(|entry| entry.is_file())
+                    .map(|entry| entry.path.clone())
+            })
+            .filter(|path| {
+                path.extension()
+                    .and_then(|ext| ext.to_str())
+                    .is_some_and(|ext| {
+                        self.config
+                            .languages
+                            .get("markdown")
+                            .is_some_and(|language| {
+                                language
+                                    .extensions
+                                    .iter()
+                                    .any(|candidate| candidate.eq_ignore_ascii_case(ext))
+                            })
+                    })
+            });
+        let mut menu =
+            crate::app::types::FileExplorerContextMenu::new(x, y + 1, is_multi, is_root_selected);
+        if !is_multi && !is_root_selected {
+            if let Some(path) = markdown_path {
+                use crate::app::types::{FileExplorerContextMenuItem, MarkdownContextAction};
+                menu.markdown_target = Some((path, self.effective_active_split()));
+                menu.items.extend(
+                    [
+                        MarkdownContextAction::Preview,
+                        MarkdownContextAction::Split,
+                        MarkdownContextAction::Edit,
+                    ]
+                    .into_iter()
+                    .filter(|action| self.markdown_action_available(*action))
+                    .map(FileExplorerContextMenuItem::Markdown),
+                );
+                menu.menu.item_count = menu.items.len();
+            }
+        }
         self.active_window_mut().key_context = crate::input::keybindings::KeyContext::FileExplorer;
         self.active_window_mut().tab_context_menu = None;
-        self.active_window_mut().file_explorer_context_menu = Some(
-            crate::app::types::FileExplorerContextMenu::new(x, y + 1, is_multi, is_root_selected),
-        );
+        self.active_window_mut().file_explorer_context_menu = Some(menu);
     }
 
     /// A right-press on the panel that no row claimed.
@@ -426,9 +467,25 @@ impl Editor {
     pub(super) fn execute_file_explorer_context_menu_action(
         &mut self,
         item: crate::app::types::FileExplorerContextMenuItem,
-    ) {
+        markdown_target: Option<(std::path::PathBuf, crate::model::event::LeafId)>,
+    ) -> AnyhowResult<()> {
         use crate::app::types::FileExplorerContextMenuItem;
         match item {
+            FileExplorerContextMenuItem::Markdown(action) => {
+                if let Some((path, pane)) = markdown_target {
+                    if self.markdown_action_available(action) {
+                        let Some(current) = self.active_window().pane_buffer(pane) else {
+                            return Ok(());
+                        };
+                        self.focus_split(pane, current);
+                        let buffer_id = self.open_file(&path)?;
+                        self.active_window_mut()
+                            .promote_buffer_from_preview(buffer_id);
+                        // Explicit preview bypasses markdown.default_view through its named handler.
+                        self.execute_markdown_context_action(action, buffer_id, pane)?;
+                    }
+                }
+            }
             FileExplorerContextMenuItem::NewFile => self.file_explorer_new_file(),
             FileExplorerContextMenuItem::NewDirectory => self.file_explorer_new_directory(),
             FileExplorerContextMenuItem::Rename => self.file_explorer_rename(),
@@ -440,6 +497,7 @@ impl Editor {
             FileExplorerContextMenuItem::CopyFullPath => self.file_explorer_copy_path(false),
             FileExplorerContextMenuItem::CopyRelativePath => self.file_explorer_copy_path(true),
         }
+        Ok(())
     }
 
     /// Handle file explorer border drag for resizing

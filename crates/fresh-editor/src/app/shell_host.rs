@@ -2749,6 +2749,9 @@ impl Editor {
                 self.pan_pane_tab_strip(pane, delta);
             }
             UiFact::PaneTabsPan { pane, delta } => self.pan_pane_tab_strip(pane, delta),
+            UiFact::PaneContentContext { pane, x, y } => {
+                self.open_editor_context_menu(pane, x, y);
+            }
             UiFact::PaneContentPress {
                 pane,
                 byte,
