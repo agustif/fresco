@@ -44,7 +44,7 @@ pub fn spawn_server_detached(spawn: &super::DaemonSpawn<'_>) -> io::Result<u32> 
     let log_dir = std::env::var("LOCALAPPDATA")
         .map(PathBuf::from)
         .unwrap_or_else(|_| std::env::temp_dir())
-        .join("fresh")
+        .join("fresco")
         .join("logs");
     std::fs::create_dir_all(&log_dir)?;
 

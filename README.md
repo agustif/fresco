@@ -1,359 +1,70 @@
-# Fresh
+# Fresco
 
-A modern, full-featured terminal text editor, **with zero configuration**. Familiar keybindings, mouse support, and IDE-level features — no learning curve required.
+A Rust terminal IDE, forked from [Fresh](https://github.com/sinelaw/fresh), with
+beautiful Markdown and native Mermaid text diagrams powered by the extracted
+Grok Markdown renderer.
 
-[Official Website](https://sinelaw.github.io/fresh/) &nbsp;·&nbsp; [Documentation](https://getfresh.dev/docs) &nbsp;·&nbsp; [Discord](https://discord.gg/gqGh3K4uW3) &nbsp;·&nbsp; [Contributing](#contributing)
-
-**[Quick Install](#installation):** &nbsp; `curl -fsSL https://raw.githubusercontent.com/sinelaw/fresh/refs/heads/master/scripts/install.sh | sh`
-
----
-
-![Fresh Demo](docs/fresh-demo2.gif)
-
-Fresh brings the intuitive UX of VS Code and Sublime Text to the terminal. Standard keybindings, full mouse support, menus, and a command palette — everything works the way you'd expect, right out of the box. No modes, no memorizing shortcuts.
-
-Built for real-world performance: Fresh handles [multi-gigabyte files](https://noamlewis.com/blog/2025/12/09/how-fresh-loads-huge-files-fast) with negligible memory overhead and delivers consistently low-latency input, regardless of file size.
-
-### Command Palette & Fuzzy Finder
-
-One shortcut to find files, run commands, switch buffers, and jump to any line.
-
-![Command Palette](docs/blog/productivity/command-palette/showcase.gif)
-
-### Multitask with the Orchestrator
-
-Start each task in its own worktree, hop between them with an arrow key, and leave the rest running.
-
-![Orchestrator](docs/blog/orchestrator-worktrees/showcase.gif)
-
-### Multi-Cursor Editing
-
-Select and edit multiple occurrences simultaneously — the same workflow you know from graphical editors.
-
-![Multi-Cursor](docs/blog/editing/multi-cursor/showcase.gif)
-
-### Themes & Customization
-
-Browse and apply color themes instantly. Full settings UI and interactive keybinding editor included.
-
-![Select Theme](docs/blog/themes/select-theme/showcase.gif)
-
-See more feature demos: [Editing](https://getfresh.dev/docs/blog/editing) (search & replace, block selection, sort lines, ...) · [Productivity](https://getfresh.dev/docs/blog/productivity) (file explorer, split view, integrated terminal, ...) · [Themes](https://getfresh.dev/docs/blog/themes)
-
----
-
-## Feature Overview
-
-| Category | Features |
-|----------|----------|
-| **File Management** | open/save/new/close, file explorer, tabs, auto-revert, git file finder |
-| **Editing** | undo/redo, multi-cursor, block selection, smart indent, comments, clipboard |
-| **Search & Replace** | incremental search, find in selection, query replace, git grep |
-| **Navigation** | go to line/bracket, word movement, position history, bookmarks, error navigation |
-| **Views & Layout** | split panes, line numbers, line wrap, backgrounds, markdown preview |
-| **Language Server (LSP)** | go to definition, references, hover, code actions, rename, diagnostics, autocompletion |
-| **Productivity** | command palette, menu bar, keyboard macros, git log, diagnostics panel |
-| **Multitasking (Orchestrator)** | one workspace per git worktree, terminals and long-running commands per workspace, coding agents (claude, codex, opencode, aider) with resumable sessions, dock switcher, remote/SSH workspaces |
-| **Extensibility** | TypeScript plugins (sandboxed QuickJS), color highlighter, TODO highlighter, merge conflicts, path complete, keymaps |
-| **Internationalization** | Multiple language support (see [`locales/`](locales/)), plugin translation system |
-
-## Installation
-
-Quick install:
-
-`curl -fsSL https://raw.githubusercontent.com/sinelaw/fresh/refs/heads/master/scripts/install.sh | sh`
-
-On Linux this installs the **universal build**: one statically linked binary
-that runs on every distro, unpacked under `~/.local`, owned by you. It needs no
-root, and it updates itself — `fresh --cmd update`, or the update prompt in the
-editor. On macOS it uses Homebrew.
-
-Prefer your distro's package manager? Ask for it explicitly:
-
-```bash
-curl -fsSL .../install.sh | sh -s -- --method=deb    # also: rpm, aur, nix, cargo, npm, brew, appimage
+```sh
+cargo install --path crates/fresh-editor --bin fresco --locked
+fresco README.md
 ```
 
-Packages are fully supported — they are opt-in rather than the default because
-installing one needs root and hands updates to that package manager. `fresh`
-records how it was installed either way, and updates through that same
-mechanism. `--method=auto` restores the old autodetecting behaviour, and
-`install.sh --help` lists everything.
+The build embeds all plugins. No Node.js, browser, image protocol, or external
+Mermaid executable is needed at runtime. Rust 1.95 and a C compiler are required
+when building from source.
 
-Or, pick your preferred method:
+## Markdown
 
-| Platform | Method |
-|----------|--------|
-| Linux (any distro) | [universal build](#universal-build-linux) — self-updating, no root |
-| macOS | [brew](#brew) |
-| Bazzite/Bluefin/Aurora Linux | [brew](#brew) |
-| Windows | [winget](#windows-winget) |
-| Arch Linux | [AUR](#arch-linux-aur) |
-| Debian/Ubuntu | [.deb](#debianubuntu-deb) |
-| Fedora/RHEL | [.rpm](#fedorarhel-rpm), [Terra](https://terra.fyralabs.com/) |
-| OpenSUSE | [.rpm](#opensuse-rpm) |
-| FreeBSD | [ports / pkg](https://www.freshports.org/editors/fresh) |
-| Gentoo | [GURU](#gentoo-guru) |
-| Linux (sandboxed / portable) | [AppImage](#appimage), [Flatpak](#flatpak) |
-| All platforms | [Pre-built binaries](#pre-built-binaries) |
-| npm | [npm / npx](#npm) |
-| Rust users (Fast) | [cargo-binstall](#using-cargo-binstall) |
-| Rust users | [crates.io](#from-cratesio) |
-| Nix | [Nix flakes](#nix-flakes) |
-| Developers | [From source](#from-source) |
+Markdown files open in compose mode: centered text, hidden formatting markers,
+styled headings, framed code blocks, and table borders. Open the command palette
+with **Ctrl+P**, then choose **Markdown: Toggle Compose/Preview** to switch back
+to source mode. The all-files toggle persists your compose preference.
 
-### Universal build (Linux)
+For a live reader alongside the editable source, choose
+**Fresco Markdown: Open Live Preview** in the command palette. This bundled
+plugin renders the whole document, including Mermaid fences, into a read-only
+pane. It refreshes after edits, undo/redo, saves, disk reloads, and pane resizes.
+Running the command again reuses the existing preview.
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/sinelaw/fresh/refs/heads/master/scripts/install.sh | sh
+```mermaid
+flowchart LR
+    A[Markdown source] --> B[Grok renderer]
+    B --> C[Fresco live preview]
 ```
 
-A single static (musl) binary for `x86_64` and `aarch64` with every feature
-compiled in, including plugins. It unpacks to `~/.local/share/fresh-editor` and
-symlinks `~/.local/bin/fresh`; set `FRESH_INSTALL_DIR` / `FRESH_BIN_DIR` to put
-them elsewhere. Ensure `~/.local/bin` is in your `PATH`.
+Supported diagrams include flowcharts, sequences, states, classes, and entity
+relationships. They render as Unicode box-drawing text in ordinary terminals.
+Unsupported diagrams retain their source in a frame. Large diagrams fall back
+when they exceed the engine's layout limits or available width. Preview input
+is limited to 256 KiB; the editor and compose mode remain available for larger files.
 
-Because nothing else owns these files, this is the one Linux install that can
-replace itself: `fresh --cmd update` downloads the next release, verifies it
-against both its published checksum and GitHub's release attestation, and swaps
-the binary in place.
+Try [the Markdown showcase](docs/fresco-showcase.md).
 
-The archive also carries the same desktop entry and icon theme the `.deb` and
-`.rpm` install, and the installer copies them into `$XDG_DATA_HOME`
-(`~/.local/share` by default) so Fresh shows up in your application menu. Pass
-`--no-desktop-integration`, or set `FRESH_NO_DESKTOP=1`, to skip that — usually
-what you want on a server or in a container. Every file written outside the
-install directory is listed in
-`~/.local/share/fresh-editor/installed-files.txt`, so re-running the installer
-cleans up after the previous run and uninstalling is `rm` over that list plus
-the install directory and the symlink.
+## Fork identity and compatibility
 
-Downloading the archive by hand from the [releases
-page](https://github.com/sinelaw/fresh/releases) works the same way — it ships
-the same install receipt, so a hand-unpacked copy self-updates too. Only the
-binary is swapped on update, so the desktop entry and icons are refreshed by
-re-running the installer, not by `fresh --cmd update`.
+- Executable: `fresco`.
+- GitHub: [agustif/fresco](https://github.com/agustif/fresco).
+- Config: `~/.config/fresco/` on macOS and Linux; platform data/cache directories
+  also use `fresco`. Run `fresco --cmd config paths` for this machine's exact paths.
+- Upstream self-update and automatic update checks are disabled in the default
+  build. Update by pulling this repository and repeating the install command.
+- Internal `fresh-*` crate names and TypeScript plugin APIs remain compatible
+  with upstream. Existing Fresh plugin documentation applies.
+- Upstream release/package workflows are retained as historical infrastructure;
+  they are not Fresco release automation.
 
-### Brew
+See [Fresh's documentation](https://getfresh.dev) for editing, LSP, terminals,
+remote files, sessions, and plugin authoring. See
+[renderer provenance](vendor/PROVENANCE.md) for the extracted library and licenses.
 
-On macOS and some linux distros (Bazzite/Bluefin/Aurora):
+## Validation
 
-> **Note:** On macOS, see [macOS Terminal Tips](https://getfresh.dev/docs/configuration/keyboard#macos-terminal-tips) for recommended terminal configuration.
-
-```bash
-brew install fresh-editor
+```sh
+cargo test -p fresh-plugin-runtime markdown_preview --lib
+cargo test -p xai-grok-markdown --lib
+bun test crates/fresh-editor/plugins/tests/fresco_markdown.test.ts
+cargo build -p fresh-editor --bin fresco --release --locked
 ```
 
-### Windows (winget)
-
-```bash
-winget install fresh-editor
-```
-
-Alternatively, Windows users can use [npm](#npm).
-
-### Arch Linux ([AUR](https://aur.archlinux.org/packages/fresh-editor-bin))
-
-**Binary package (recommended, faster install):**
-
-```bash
-git clone https://aur.archlinux.org/fresh-editor-bin.git
-cd fresh-editor-bin
-makepkg --syncdeps --install
-```
-
-**Build from source:**
-
-```bash
-git clone https://aur.archlinux.org/fresh-editor.git
-cd fresh-editor
-makepkg --syncdeps --install
-```
-
-**Using an AUR helper (such as `yay` or `paru`):**
-
-```bash
-# Binary package (recommended, faster install)
-yay -S fresh-editor-bin
-
-# Or build from source
-yay -S fresh-editor
-```
-
-### Debian/Ubuntu (.deb)
-
-Download and install the latest release:
-
-```bash
-curl -sL $(curl -s https://api.github.com/repos/sinelaw/fresh/releases/latest | grep "browser_download_url.*_$(dpkg --print-architecture)\.deb" | cut -d '"' -f 4) -o fresh-editor.deb && sudo dpkg -i fresh-editor.deb
-```
-
-Or download the `.deb` file manually from the [releases page](https://github.com/sinelaw/fresh/releases).
-
-### Fedora/RHEL (.rpm)
-
-Download and install the latest release:
-
-```bash
-curl -sL $(curl -s https://api.github.com/repos/sinelaw/fresh/releases/latest | grep "browser_download_url.*\.$(uname -m)\.rpm" | cut -d '"' -f 4) -o fresh-editor.rpm && sudo rpm -U fresh-editor.rpm
-```
-
-Or download the `.rpm` file manually from the [releases page](https://github.com/sinelaw/fresh/releases).
-
-### OpenSUSE (.rpm)
-
-There is no openSUSE repository for `fresh` yet, so install the `.rpm` from the
-release directly:
-
-```bash
-curl -sL $(curl -s https://api.github.com/repos/sinelaw/fresh/releases/latest | grep "browser_download_url.*\.$(uname -m)\.rpm" | cut -d '"' -f 4) -o fresh-editor.rpm && sudo zypper --no-gpg-checks install ./fresh-editor.rpm
-```
-
-Or download the `.rpm` file manually from the [releases page](https://github.com/sinelaw/fresh/releases).
-
-### Gentoo ([GURU](https://wiki.gentoo.org/wiki/Project:GURU))
-
-Enable the repository as read in [Project:GURU/Information for End Users](https://wiki.gentoo.org/wiki/Project:GURU/Information_for_End_Users) then emerge the package:
-
-
-```bash
-emerge --ask app-editors/fresh
-```
-
-### AppImage
-
-> On most systems the [universal build](#universal-build-linux) is the better
-> choice: same "runs anywhere" property, no FUSE dependency, and no mount
-> overhead on each launch. `install.sh` no longer selects AppImage
-> automatically — pass `--method=appimage` if you specifically want it.
-
-Download the `.AppImage` file from the [releases page](https://github.com/sinelaw/fresh/releases) and run:
-
-```bash
-chmod +x fresh-editor-VERSION-x86_64.AppImage
-./fresh-editor-VERSION-x86_64.AppImage
-```
-
-**For faster startup** (recommended): Extract the AppImage instead of running it directly. This avoids the FUSE mount overhead on each launch (~10x faster):
-
-```bash
-./fresh-editor-VERSION-x86_64.AppImage --appimage-extract
-mkdir -p ~/.local/share/fresh-editor ~/.local/bin
-mv squashfs-root/* ~/.local/share/fresh-editor/
-ln -sf ~/.local/share/fresh-editor/usr/bin/fresh ~/.local/bin/fresh
-```
-
-Ensure `~/.local/bin` is in your PATH. Available for x86_64 and aarch64 architectures.
-
-### Flatpak
-
-Download the `.flatpak` bundle from the [releases page](https://github.com/sinelaw/fresh/releases) and install:
-
-```bash
-flatpak install --user fresh-editor-VERSION-x86_64.flatpak
-flatpak run io.github.sinelaw.fresh
-```
-
-See [flatpak/README.md](flatpak/README.md) for building from source.
-
-### Pre-built binaries
-
-Download the latest release for your platform from the [releases page](https://github.com/sinelaw/fresh/releases).
-
-On Linux, prefer the `-unknown-linux-musl` archives: they are statically linked,
-so they run on any distro regardless of its glibc version, and they are gzipped
-so a stock `tar` can unpack them without `xz-utils`. Every archive carries an
-install receipt, so an unpacked copy knows how to update itself.
-
-### Using mise
-
-```bash
-mise use github:sinelaw/fresh
-```
-
-### npm
-
-```bash
-npm install -g @fresh-editor/fresh-editor
-```
-
-Or try it without installing:
-
-```bash
-npx @fresh-editor/fresh-editor
-```
-
-### Using cargo-binstall
-
-To install the binary directly without compiling (much faster than crates.io):
-
-First, install cargo-binstall if you haven't already
-
-```bash
-cargo install cargo-binstall
-```
-
-Then install fresh
-
-```bash
-cargo binstall fresh-editor
-```
-
-### Nix flakes
-
-Run without installing:
-```bash
-nix run github:sinelaw/fresh
-```
-
-Or install to your profile:
-```bash
-nix profile add github:sinelaw/fresh
-```
-
-### From crates.io
-
-```bash
-cargo install --locked fresh-editor
-```
-
-### From source
-
-```bash
-git clone https://github.com/sinelaw/fresh.git
-cd fresh
-cargo build --release
-./target/release/fresh [file]
-```
-
-## Documentation
-
-- [User Guide](https://getfresh.dev/docs)
-- [macOS Tips](https://getfresh.dev/docs/configuration/keyboard#macos-terminal-tips) - Terminal configuration, keyboard shortcuts, and troubleshooting for Mac users
-- [Plugin Development](https://getfresh.dev/docs/plugins/development)
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## Privacy
-
-Fresh checks for new versions daily to notify you of available upgrades. Alongside this, it sends basic anonymous telemetry (version, OS/architecture, terminal type) to help understand usage patterns. No personal data or file contents are collected.
-
-To disable both upgrade checks and telemetry, use `--no-upgrade-check` or set `check_for_updates: false` in your config.
-
-## License
-
-Copyright (c) Noam Lewis
-
-This program is free software: you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later
-version (GPL-3.0-or-later).
-
-This program is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE. See the [GNU General Public License](LICENSE) for more
-details.
-
-SPDX-License-Identifier: GPL-3.0-or-later
+Fresco inherits Fresh's GPL-3.0-or-later license. The vendored Grok renderer
+retains its Apache-2.0 license and attribution.

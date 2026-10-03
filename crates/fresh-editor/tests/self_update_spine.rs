@@ -116,7 +116,7 @@ fn place_binary(to: &Path) {
 ///
 /// Falls back to the unstripped binary if `strip` is unavailable.
 fn stripped_binary() -> PathBuf {
-    let original = PathBuf::from(env!("CARGO_BIN_EXE_fresh"));
+    let original = PathBuf::from(env!("CARGO_BIN_EXE_fresco"));
     let cache_dir = Path::new(env!("CARGO_TARGET_TMPDIR"));
     let cached = cache_dir.join("fresh-stripped");
     if is_fresher(&cached, &original) {

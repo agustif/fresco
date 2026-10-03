@@ -45,9 +45,9 @@ const BEFORE_HELP_EN: &str =
 // The doc comments on `Cli` and its fields are intentionally short and
 // only used by the derive — the English `before_help` banner below is
 // the user's escape hatch back to a known language.
-/// fresh
+/// fresco
 #[derive(Parser, Debug)]
-#[command(name = "fresh")]
+#[command(name = "fresco")]
 #[command(version, propagate_version = true)]
 #[command(before_help = BEFORE_HELP_EN)]
 struct Cli {
@@ -59,7 +59,7 @@ struct Cli {
     /// Print the guide for driving this editor from a shell
     /// The one entry point an agent needs; defaults to the scripting guide.
     /// `require_equals` keeps a bare `--skill` from swallowing the argument
-    /// after it, which is otherwise a file to open: `fresh --skill README.md`
+    /// after it, which is otherwise a file to open: `fresco --skill README.md`
     /// prints the guide instead of failing on an unknown topic named
     /// `README.md`. A topic is selected with `=`, as in `--skill=tour`.
     #[arg(
@@ -87,7 +87,7 @@ struct Cli {
     #[arg(long)]
     no_plugins: bool,
 
-    /// Skip `~/.config/fresh/init.ts` for this launch
+    /// Skip `~/.config/fresco/init.ts` for this launch
     #[arg(long)]
     no_init: bool,
 
@@ -138,7 +138,7 @@ struct Cli {
 
     /// Boot the daemon in Orchestrator mode (internal, used by
     /// spawn_server_detached). The client knows the launch was a bare
-    /// `fresh`; the daemon is a different process and cannot see that.
+    /// `fresco`; the daemon is a different process and cannot see that.
     #[arg(long, hide = true)]
     orchestrator_mode: bool,
 
@@ -174,7 +174,7 @@ struct Cli {
     /// Serve the editor to a browser over a local HTTP/WebSocket bridge.
     /// Optionally give a bind address (default 127.0.0.1:8137). Any FILES are
     /// opened in the served editor. This also runs the session daemon, so
-    /// `fresh -a` in the same directory attaches a terminal to the very same
+    /// `fresco -a` in the same directory attaches a terminal to the very same
     /// editor.
     #[cfg(feature = "web")]
     #[arg(long, value_name = "ADDR", num_args = 0..=1, default_missing_value = "127.0.0.1:8137")]
@@ -231,7 +231,7 @@ struct Args {
     /// `files`.  Populated only for the daemon side.
     ssh_url: Option<String>,
     /// Forwarded to the detached daemon by `spawn_server_detached` when the
-    /// client was a bare `fresh` and `orchestrator_mode` was on.  Populated
+    /// client was a bare `fresco` and `orchestrator_mode` was on.  Populated
     /// only for the daemon side.
     orchestrator_mode: bool,
     // Daemon-related fields (set via subcommands or -a shortcut)
@@ -266,7 +266,7 @@ impl From<Cli> for Args {
             false
         };
 
-        // `fresh --cmd update [--check] [--yes] [--allow-downgrade] [--force]
+        // `fresco --cmd update [--check] [--yes] [--allow-downgrade] [--force]
         //                     [--print-command] [--skip-attestation]
         //                     [--releases-url U] [--download-base U]`
         let update = cli.cmd.first().map(String::as_str) == Some("update");
@@ -332,7 +332,7 @@ impl From<Cli> for Args {
                 | ["s", "list", ..]
                 | ["session", "ls", ..]
                 | ["s", "ls", ..] => (true, None, false, None, false, false, None, cli.files, None),
-                // Open file in a daemon: fresh --cmd daemon open-file <name> <files...> [--wait]
+                // Open file in a daemon: fresco --cmd daemon open-file <name> <files...> [--wait]
                 ["daemon", "open-file", name, files @ ..]
                 | ["d", "open-file", name, files @ ..]
                 | ["session", "open-file", name, files @ ..]
@@ -1755,10 +1755,10 @@ fn initialize_app(args: &Args) -> AnyhowResult<SetupState> {
     }));
 
     // **Whatever is on stdin is input, never keystrokes.** `--stdin` and a
-    // `-` among the files ask for it explicitly; a bare `fresh` with stdin
+    // `-` among the files ask for it explicitly; a bare `fresco` with stdin
     // redirected means the same thing (#3252), since it is the only input
     // there is. That launch used to fall between the cases — `fresh -` reads
-    // stdin, a bare `fresh` on a terminal goes to the orchestrator — and kept
+    // stdin, a bare `fresco` on a terminal goes to the orchestrator — and kept
     // the redirect on fd 0: its bytes reached the key decoder as keystrokes,
     // and once a pipe's writer closed, `poll` reported `POLLHUP` immediately
     // and forever, without `POLLIN`, which `services::tty_input::poll_readable`
@@ -2157,7 +2157,7 @@ fn check_plugin_bundle(plugin_path: &std::path::Path) -> AnyhowResult<()> {
     Ok(())
 }
 
-/// `fresh --cmd init check` — syntax-check ~/.config/fresh/init.ts via oxc.
+/// `fresco --cmd init check` — syntax-check ~/.config/fresco/init.ts via oxc.
 /// Exits 0 if the file is absent or parses cleanly, 1 on any parse error.
 fn init_check_command() -> AnyhowResult<()> {
     let dir_context = fresh::config_io::DirectoryContext::from_system()
@@ -2203,7 +2203,7 @@ fn init_check_command() -> AnyhowResult<()> {
     std::process::exit(1);
 }
 
-/// Initialize a new Fresh package (plugin, theme, or language pack)
+/// Initialize a new Fresco package (plugin, theme, or language pack)
 fn init_package_command(package_type: Option<String>) -> AnyhowResult<()> {
     use std::io::{BufRead, Write};
 
@@ -2221,7 +2221,7 @@ fn init_package_command(package_type: Option<String>) -> AnyhowResult<()> {
         input.trim().to_string()
     };
 
-    println!("Fresh Package Initializer");
+    println!("Fresco Package Initializer");
     println!("=========================\n");
 
     // Determine package type
@@ -2238,7 +2238,7 @@ fn init_package_command(package_type: Option<String>) -> AnyhowResult<()> {
         }
         None => {
             println!("Package types:");
-            println!("  1. plugin   - Extend Fresh with custom commands and functionality");
+            println!("  1. plugin   - Extend Fresco with custom commands and functionality");
             println!("  2. theme    - Custom color schemes and styling");
             println!("  3. language - Syntax highlighting, LSP, and language configuration\n");
 
@@ -2329,7 +2329,7 @@ fn init_package_command(package_type: Option<String>) -> AnyhowResult<()> {
         "language" => {
             println!("  2. Edit grammars/syntax.sublime-syntax (YAML format)");
             println!("  3. Update package.json with file extensions and LSP command");
-            println!("  4. Test by copying to ~/.config/fresh/grammars/");
+            println!("  4. Test by copying to ~/.config/fresco/grammars/");
             println!("  5. Validate manifest: ./validate.sh");
         }
         _ => unreachable!(),
@@ -2352,7 +2352,7 @@ fn init_package_command(package_type: Option<String>) -> AnyhowResult<()> {
 /// Write a validation script that checks package.json against the official schema
 fn write_validate_script(dir: &Path) -> AnyhowResult<()> {
     let validate_sh = r#"#!/bin/bash
-# Validate package.json against the official Fresh package schema
+# Validate package.json against the official Fresco package schema
 #
 # Prerequisite: pip install jsonschema
 curl -sSL https://raw.githubusercontent.com/sinelaw/fresh/main/scripts/validate-package.sh | bash
@@ -2363,7 +2363,7 @@ curl -sSL https://raw.githubusercontent.com/sinelaw/fresh/main/scripts/validate-
 /// Write a validation script for themes (validates both package.json and theme.json)
 fn write_theme_validate_script(dir: &Path) -> AnyhowResult<()> {
     let validate_sh = r#"#!/bin/bash
-# Validate Fresh theme package
+# Validate Fresco theme package
 #
 # Prerequisite: pip install jsonschema
 set -e
@@ -2456,7 +2456,7 @@ fn create_plugin_package(
         description,
         author,
         "plugin",
-        "A Fresh plugin",
+        "A Fresco plugin",
         &format!(
             r#"{{
     "entry": "{entry}"
@@ -2470,7 +2470,7 @@ fn create_plugin_package(
 
     let handler = name.replace('-', "_");
     let plugin_ts = format!(
-        r#"// Fresh plugin. Guide: https://getfresh.dev/docs/plugins/development/setup
+        r#"// Fresco plugin. Guide: https://getfresh.dev/docs/plugins/development/setup
 
 const editor = getEditor();
 
@@ -2505,7 +2505,7 @@ editor.on("buffer_activated", (args) => {{
 
 ## Installation
 
-Install via Fresh's package manager:
+Install via Fresco's package manager:
 ```
 :pkg install {}
 ```
@@ -2526,7 +2526,7 @@ MIT
 "#,
         name,
         if description.is_empty() {
-            "A Fresh plugin."
+            "A Fresco plugin."
         } else {
             description
         },
@@ -2587,14 +2587,14 @@ fn set_up_plugin_dev(dir: &Path) -> Vec<String> {
     let dir_context = match fresh::config_io::DirectoryContext::from_system() {
         Ok(d) => d,
         Err(e) => {
-            report.push(format!("✗ Could not find the Fresh config folder: {e}"));
+            report.push(format!("✗ Could not find the Fresco config folder: {e}"));
             return report;
         }
     };
     let config_dir = &dir_context.config_dir;
 
     // Types: the same files the editor refreshes on every start, linked so
-    // they track the installed Fresh version.
+    // they track the installed Fresco version.
     fresh::init_script::refresh_types_scaffolding(config_dir);
     let types_dir = config_dir.join("types");
     report.push(match link_dir(&types_dir, &dir.join("types")) {
@@ -2621,7 +2621,7 @@ fn set_up_plugin_dev(dir: &Path) -> Vec<String> {
     });
     if !fresh::services::lsp::command_exists("typescript-language-server") {
         report.push(
-            "! For type checking inside Fresh, run: npm install -g typescript-language-server"
+            "! For type checking inside Fresco, run: npm install -g typescript-language-server"
                 .to_string(),
         );
     }
@@ -2672,7 +2672,7 @@ fn create_theme_package(
         description,
         author,
         "theme",
-        "A Fresh theme",
+        "A Fresco theme",
         r#"{
     "theme": "theme.json"
   }"#,
@@ -2718,7 +2718,7 @@ fn create_theme_package(
 
 ## Installation
 
-Install via Fresh's package manager:
+Install via Fresco's package manager:
 ```
 :pkg install {}
 ```
@@ -2730,7 +2730,7 @@ After installation, activate the theme:
 :theme {}
 ```
 
-Or add to your Fresh config:
+Or add to your Fresco config:
 ```json
 {{
   "theme": "{}"
@@ -2747,7 +2747,7 @@ MIT
 "#,
         name,
         if description.is_empty() {
-            "A Fresh theme."
+            "A Fresco theme."
         } else {
             description
         },
@@ -2775,7 +2775,7 @@ fn create_language_package(
         description,
         author,
         "language",
-        "Language support for Fresh",
+        "Language support for Fresco",
         r#"{
     "grammar": {
       "file": "grammars/syntax.sublime-syntax",
@@ -2854,7 +2854,7 @@ contexts:
 
 ## Installation
 
-Install via Fresh's package manager:
+Install via Fresco's package manager:
 ```
 :pkg install {}
 ```
@@ -2882,7 +2882,7 @@ Update `package.json` to match your language's requirements.
 
 1. Edit `grammars/syntax.sublime-syntax` for syntax highlighting
 2. Update `package.json` with correct file extensions and LSP command
-3. Test by copying to `~/.config/fresh/grammars/` and restarting Fresh
+3. Test by copying to `~/.config/fresco/grammars/` and restarting Fresco
 
 **Tip:** Search GitHub for existing `<language> sublime-syntax` files you can adapt.
 If using an existing grammar, check its license and include a copy in `grammars/LICENSE`.
@@ -2904,7 +2904,7 @@ MIT
 "#,
         name,
         if description.is_empty() {
-            "Language support for Fresh."
+            "Language support for Fresco."
         } else {
             description
         },
@@ -3057,13 +3057,13 @@ fn list_sessions_command() -> AnyhowResult<()> {
         if sessions.len() == 1 {
             let (id, display) = &sessions[0];
             if display != id {
-                println!("Attach with: fresh -a  (from that directory)");
-                println!("         or: fresh -a {}", id);
+                println!("Attach with: fresco -a  (from that directory)");
+                println!("         or: fresco -a {}", id);
             } else {
-                println!("Attach with: fresh -a {}", id);
+                println!("Attach with: fresco -a {}", id);
             }
         } else {
-            println!("Attach with: fresh -a [NAME]");
+            println!("Attach with: fresco -a [NAME]");
         }
     }
 
@@ -3205,12 +3205,12 @@ fn log_spawned_daemon(pid: u32) {
 ///
 /// Two entry points land here, and they run the SAME daemon:
 ///
-///   - `fresh --server` — the detached process a `fresh -a` client spawns
+///   - `fresco --server` — the detached process a `fresco -a` client spawns
 ///     when no daemon is live for the working directory. Chatty on stderr,
 ///     which it points at its own log file.
-///   - `fresh --web [ADDR]` (`web_addr = Some`) — the same daemon in the
+///   - `fresco --web [ADDR]` (`web_addr = Some`) — the same daemon in the
 ///     foreground, additionally serving the web UI. Same session, same
-///     sockets: `fresh -a` in this working directory attaches a terminal to
+///     sockets: `fresco -a` in this working directory attaches a terminal to
 ///     the very editor the browser is looking at, and closing either one
 ///     leaves the session (and the other) running.
 ///
@@ -3343,7 +3343,7 @@ fn run_server_command(args: &Args, web_addr: Option<String>) -> AnyhowResult<()>
 
     // `--web` has no client to send an `OpenFiles` after the handshake, so the
     // files from its own command line ride in on the config and are queued once
-    // the editor is up. The detached daemon leaves this empty — its `fresh -a`
+    // the editor is up. The detached daemon leaves this empty — its `fresco -a`
     // client sends the list itself, `--wait` and all.
     let startup_files = if web_addr.is_some() {
         build_file_requests(&args.files, &working_dir)
@@ -3394,15 +3394,15 @@ fn run_server_command(args: &Args, web_addr: Option<String>) -> AnyhowResult<()>
     boot!("[server] Server ready at {:?}", server.socket_paths());
     tracing::info!("Editor server started at {:?}", server.socket_paths());
     // The web banner is the foreground path's only startup output: the URL to
-    // open, and the `fresh -a` invocation that attaches a terminal to the same
+    // open, and the `fresco -a` invocation that attaches a terminal to the same
     // session. Sessions are keyed by working directory unless named, which is
     // exactly how `-a` resolves them.
     if let Some(addr) = &web_addr {
         eprintln!("fresh web bridge on http://{addr}  (WS push on /ws)");
         match &args.session_name {
-            Some(name) => eprintln!("attach a terminal to this session: fresh -a {name}"),
+            Some(name) => eprintln!("attach a terminal to this session: fresco -a {name}"),
             None => eprintln!(
-                "attach a terminal to this session: fresh -a   (in {})",
+                "attach a terminal to this session: fresco -a   (in {})",
                 working_dir.display()
             ),
         }
@@ -3416,7 +3416,7 @@ fn run_server_command(args: &Args, web_addr: Option<String>) -> AnyhowResult<()>
     Ok(())
 }
 
-/// `fresh --web [ADDR]` on a build compiled without the `web` feature.
+/// `fresco --web [ADDR]` on a build compiled without the `web` feature.
 ///
 /// The web UI is opt-in at compile time (see the `web` feature in Cargo.toml),
 /// so a default build has no bridge to serve. Say that, and say how to get
@@ -3432,10 +3432,10 @@ fn web_unavailable() -> ! {
     std::process::exit(1);
 }
 
-/// `fresh --web [ADDR] [FILES…]` — run the session daemon in the foreground
+/// `fresco --web [ADDR] [FILES…]` — run the session daemon in the foreground
 /// with the web UI bridge hosted inside it.
 ///
-/// The daemon owns the editor; the browser and every `fresh -a` terminal are
+/// The daemon owns the editor; the browser and every `fresco -a` terminal are
 /// transports onto that one editor, so a change made in the browser shows up in
 /// an attached terminal (and the other way round), and closing either leaves the
 /// session running. Because this binds the ordinary session sockets, a session
@@ -3452,10 +3452,10 @@ fn run_web_command(args: &Args, addr: &str) -> AnyhowResult<()> {
         // `anyhow::Error` here would hand the user a backtrace instead
         // (`real_main` turns backtraces on so genuine crashes are diagnosable).
         eprintln!(
-            "Error: a fresh session is already running here — `fresh -a` attaches a terminal to it."
+            "Error: a fresh session is already running here — `fresco -a` attaches a terminal to it."
         );
         eprintln!("To serve a separate session over the web, give it a name:");
-        eprintln!("  fresh --web {addr} --session-name NAME");
+        eprintln!("  fresco --web {addr} --session-name NAME");
         std::process::exit(1);
     }
     run_server_command(args, Some(addr.to_string()))
@@ -3467,7 +3467,7 @@ fn run_web_command(args: &Args, addr: &str) -> AnyhowResult<()> {
 /// When it looks like a filesystem path (absolute or `.`-relative), tries to
 /// resolve it as a working-directory session first, falling back to a literal
 /// named session.  This lets users pass paths like `/home/user/project` to
-/// target sessions that were started with `fresh -a` in that directory.
+/// target sessions that were started with `fresco -a` in that directory.
 fn resolve_session(session_name: Option<&str>) -> anyhow::Result<SocketPaths> {
     let working_dir = std::env::current_dir()?;
 
@@ -3584,7 +3584,7 @@ fn run_open_files_command(
             return run_attach(session_name, &[], locale, config, false);
         } else {
             eprintln!(
-                "Started a new daemon and opened {} file(s). Attach with: fresh -a{}",
+                "Started a new daemon and opened {} file(s). Attach with: fresco -a{}",
                 file_requests.len(),
                 session_name.map_or(String::new(), |n| format!(" {}", n)),
             );
@@ -3664,7 +3664,7 @@ where
     }
 }
 
-/// When launched from inside Fresh's own embedded terminal, forward the
+/// When launched from inside Fresco's own embedded terminal, forward the
 /// file/dir arguments to the parent editor (identified by `FRESH_SESSION`)
 /// instead of starting a second editor in the terminal.
 ///
@@ -3781,7 +3781,7 @@ fn forward_to_session(session: &str, files: &[String]) -> AnyhowResult<bool> {
 }
 
 // ===========================================================================
-// Agent command channel client (`fresh --cmd cmd ...`, `split`, `workspace`)
+// Agent command channel client (`fresco --cmd cmd ...`, `split`, `workspace`)
 // ===========================================================================
 
 /// Pull a `--session <id>` override out of a `--cmd` token list.
@@ -3820,10 +3820,10 @@ fn extract_session_flag<'a>(tokens: &[&'a str]) -> (Option<String>, Vec<&'a str>
 ///
 /// Worded so the reader can act: an agent that can re-run outside its sandbox
 /// needs to be told that is the fix, and told it in terms it can match on. The
-/// injected "Teach Fresh CLI" contract points at this phrasing.
+/// injected "Teach Fresco CLI" contract points at this phrasing.
 fn socket_denied_error(session: &str, socket_paths: &SocketPaths) -> anyhow::Error {
     anyhow::anyhow!(
-        "cannot reach the Fresh editor for session '{}': its control socket ({}) \
+        "cannot reach the Fresco editor for session '{}': its control socket ({}) \
          could not be reached because connecting to it was denied. The editor is \
          most likely running — the socket simply lives outside this process's \
          sandbox. Re-run this command outside the sandbox.",
@@ -3838,8 +3838,8 @@ fn resolve_cmd_socket(session_override: Option<&str>) -> AnyhowResult<SocketPath
         _ => match std::env::var("FRESH_SESSION") {
             Ok(s) if !s.trim().is_empty() => s,
             _ => anyhow::bail!(
-                "not inside a Fresh session; set --session <id> (or run inside a \
-                 Fresh workspace so $FRESH_SESSION is set)"
+                "not inside a Fresco session; set --session <id> (or run inside a \
+                 Fresco workspace so $FRESH_SESSION is set)"
             ),
         },
     };
@@ -3854,7 +3854,7 @@ fn resolve_cmd_socket(session_override: Option<&str>) -> AnyhowResult<SocketPath
         // stale session that is in fact alive and well.
         ServerLiveness::Unreachable => Err(socket_denied_error(&session, &socket_paths)),
         ServerLiveness::Dead => {
-            anyhow::bail!("no running Fresh editor for session '{}'", session)
+            anyhow::bail!("no running Fresco editor for session '{}'", session)
         }
     }
 }
@@ -3896,7 +3896,7 @@ fn cmd_build_timeout() -> std::time::Duration {
 fn cmd_read_error(e: std::io::Error) -> anyhow::Error {
     if e.kind() == std::io::ErrorKind::TimedOut {
         anyhow::anyhow!(
-            "the Fresh editor accepted the connection but did not answer within {:?}. \
+            "the Fresco editor accepted the connection but did not answer within {:?}. \
              It may be busy, or running a build without command-channel support; \
              raise the wait with FRESH_CMD_TIMEOUT_MS if it is merely slow.",
             cmd_reply_timeout()
@@ -3962,7 +3962,7 @@ fn connect_cmd(socket_paths: &SocketPaths) -> AnyhowResult<CmdConnection> {
     })?;
     if !accepted {
         // client_handshake already printed the mismatch reason.
-        anyhow::bail!("handshake with the Fresh editor failed");
+        anyhow::bail!("handshake with the Fresco editor failed");
     }
     Ok(CmdConnection { conn, reader })
 }
@@ -4000,15 +4000,15 @@ fn run_cmd_command(tokens: &[&str]) -> AnyhowResult<()> {
                 ["check", from @ ..] => script_check(from),
                 ["api", query, flags @ ..] => script_api(query, flags),
                 ["api"] => {
-                    eprintln!("usage: fresh --cmd script api <query> [--json]");
+                    eprintln!("usage: fresco --cmd script api <query> [--json]");
                     std::process::exit(2);
                 }
                 ["types"] => script_types(),
                 _ => {
-                    eprintln!("usage: fresh --cmd script api <query>     search the API by name or description");
-                    eprintln!("       fresh --cmd script check [FILE|-]  parse + check editor.* names, without running");
-                    eprintln!("       fresh --cmd script run [FILE|-]    evaluate against this workspace (default: stdin)");
-                    eprintln!("       fresh --cmd script types           paths of the API declaration files");
+                    eprintln!("usage: fresco --cmd script api <query>     search the API by name or description");
+                    eprintln!("       fresco --cmd script check [FILE|-]  parse + check editor.* names, without running");
+                    eprintln!("       fresco --cmd script run [FILE|-]    evaluate against this workspace (default: stdin)");
+                    eprintln!("       fresco --cmd script types           paths of the API declaration files");
                     std::process::exit(2);
                 }
             }
@@ -4024,10 +4024,10 @@ fn run_cmd_command(tokens: &[&str]) -> AnyhowResult<()> {
             ["list"] => command_list_command(session, None),
             _ => {
                 eprintln!(
-                    "usage: fresh --cmd command run \"<name>\"   run a registered command by its palette name"
+                    "usage: fresco --cmd command run \"<name>\"   run a registered command by its palette name"
                 );
                 eprintln!(
-                    "       fresh --cmd command list [QUERY]    list registered commands (built-in + plugin)"
+                    "       fresco --cmd command list [QUERY]    list registered commands (built-in + plugin)"
                 );
                 std::process::exit(2);
             }
@@ -4036,7 +4036,7 @@ fn run_cmd_command(tokens: &[&str]) -> AnyhowResult<()> {
             match &rest[1..] {
                 ["list", flags @ ..] => orchestrator_list_command(session, flags, false),
                 _ => {
-                    eprintln!("usage: fresh --cmd workspace list [--json]   every workspace the dock tracks");
+                    eprintln!("usage: fresco --cmd workspace list [--json]   every workspace the dock tracks");
                     std::process::exit(2);
                 }
             }
@@ -4048,30 +4048,30 @@ fn run_cmd_command(tokens: &[&str]) -> AnyhowResult<()> {
             ["wait", id, flags @ ..] => orchestrator_wait_command(session, id, flags),
             ["start", cmd, flags @ ..] => orchestrator_start_command(session, cmd, flags),
             _ => {
-                eprintln!("usage: fresh --cmd agent list [--json]                          live workspaces and their agent state");
-                eprintln!("       fresh --cmd agent get <ID> [--json]                      one workspace (ID: workspaceId, window number, or dock name)");
-                eprintln!("       fresh --cmd agent explain <ID> [--json]                  why it shows that state: rule, evidence, timing");
-                eprintln!("       fresh --cmd agent wait <ID> [--until STATE[,STATE]] [--timeout SECS] [--json]");
+                eprintln!("usage: fresco --cmd agent list [--json]                          live workspaces and their agent state");
+                eprintln!("       fresco --cmd agent get <ID> [--json]                      one workspace (ID: workspaceId, window number, or dock name)");
+                eprintln!("       fresco --cmd agent explain <ID> [--json]                  why it shows that state: rule, evidence, timing");
+                eprintln!("       fresco --cmd agent wait <ID> [--until STATE[,STATE]] [--timeout SECS] [--json]");
                 eprintln!("                                                                block until the agent is quiet (or in STATE); exit 3 on timeout");
-                eprintln!("       fresh --cmd agent start <CMD> [--prompt TEXT] [--auto] [--no-teach] [--no-wait] [--timeout SECS] [--json]");
+                eprintln!("       fresco --cmd agent start <CMD> [--prompt TEXT] [--auto] [--no-teach] [--no-wait] [--timeout SECS] [--json]");
                 eprintln!("                                                                launch CMD in this workspace and confirm it came up; exit 1 if not");
                 std::process::exit(2);
             }
         },
         _ => {
             eprintln!("Unknown command: {}", rest.join(" "));
-            eprintln!("usage: fresh --cmd script <api|check|run|types> ...");
-            eprintln!("       fresh --cmd command <run|list> ...");
-            eprintln!("       fresh --cmd workspace list");
-            eprintln!("       fresh --cmd agent <list|get|explain|wait|start> ...");
-            eprintln!("       fresh --cmd init reload");
+            eprintln!("usage: fresco --cmd script <api|check|run|types> ...");
+            eprintln!("       fresco --cmd command <run|list> ...");
+            eprintln!("       fresco --cmd workspace list");
+            eprintln!("       fresco --cmd agent <list|get|explain|wait|start> ...");
+            eprintln!("       fresco --cmd init reload");
             std::process::exit(2);
         }
     }
 }
 
 // ===========================================================================
-// `fresh --cmd workspace ...` / `fresh --cmd agent ...` — the orchestrator
+// `fresco --cmd workspace ...` / `fresco --cmd agent ...` — the orchestrator
 // over the control socket.
 //
 // Each verb is a script evaluated against the running editor through the
@@ -4341,7 +4341,7 @@ fn orchestrator_start_command(
 }
 
 // ===========================================================================
-// `fresh --cmd help` — feature guides with generated reference sections
+// `fresco --cmd help` — feature guides with generated reference sections
 // ===========================================================================
 
 /// The tour-manifest JSON schema, embedded from the same file the
@@ -4356,7 +4356,7 @@ const TOUR_SCHEMA_JSON: &str = include_str!("../plugins/schemas/tour.schema.json
 /// run and written its config-dir copy.
 const EMBEDDED_FRESH_DTS: &str = include_str!("../plugins/lib/fresh.d.ts");
 
-/// `fresh --cmd help [TOPIC]` — long-form feature guides on stdout.
+/// `fresco --cmd help [TOPIC]` — long-form feature guides on stdout.
 ///
 /// English-only, like the other `--cmd` verb output. The reference
 /// sections are *generated* from artifacts compiled into this binary —
@@ -4366,7 +4366,7 @@ const EMBEDDED_FRESH_DTS: &str = include_str!("../plugins/lib/fresh.d.ts");
 fn help_command(topic: &[&str]) -> AnyhowResult<()> {
     match topic {
         [] | ["topics"] => {
-            println!("usage: fresh --cmd help <topic>   (short form: fresh --skill [<topic>])");
+            println!("usage: fresco --cmd help <topic>   (short form: fresco --skill [<topic>])");
             println!();
             println!("topics:");
             println!(
@@ -4393,7 +4393,7 @@ fn help_command(topic: &[&str]) -> AnyhowResult<()> {
     }
 }
 
-/// `fresh --cmd help tour [--schema]` — how to author and open code tours.
+/// `fresco --cmd help tour [--schema]` — how to author and open code tours.
 fn help_tour(flags: &[&str]) -> AnyhowResult<()> {
     // `--schema` prints the raw JSON schema alone, for piping into a
     // validator or handing to an agent.
@@ -4412,7 +4412,7 @@ fn tour_help_text() -> AnyhowResult<String> {
         "\
 Guided code tours
 
-Fresh plays guided walkthroughs of a codebase from a JSON manifest,
+Fresco plays guided walkthroughs of a codebase from a JSON manifest,
 shown in the Utility Dock with a step rail and highlighted code.
 Two formats load, auto-detected by content:
 
@@ -4430,9 +4430,9 @@ Opening a tour:
   - Command palette: \"Tour: Load Definition...\" or \"Tour: Open Workspace
     Tour...\" — both open a file browser anchored at the workspace root
     with hidden files shown, so the manifests above are in reach.
-  - From a script or agent (see also: fresh --cmd help script):
+  - From a script or agent (see also: fresco --cmd help script):
       echo 'return editor.getPluginApi(\"code-tour\")
-        .openTour(\".fresh-tour.json\")' | fresh --cmd script run
+        .openTour(\".fresh-tour.json\")' | fresco --cmd script run
 
 Minimal manifest:
   {
@@ -4458,7 +4458,7 @@ Format reference (generated from the schema this build ships):
             push_schema_fields(&mut out, name, def);
         }
     }
-    out.push_str("Full JSON schema (machine-readable): fresh --cmd help tour --schema\n");
+    out.push_str("Full JSON schema (machine-readable): fresco --cmd help tour --schema\n");
     Ok(out)
 }
 
@@ -4502,7 +4502,7 @@ fn push_schema_fields(out: &mut String, title: &str, obj: &serde_json::Value) {
     out.push('\n');
 }
 
-/// `fresh --cmd help script` — the TypeScript scripting feature.
+/// `fresco --cmd help script` — the TypeScript scripting feature.
 fn help_script() -> AnyhowResult<()> {
     print!("{}", script_help_text());
     Ok(())
@@ -4515,39 +4515,39 @@ fn script_help_text() -> String {
         "\
 Scripting the editor (TypeScript)
 
-Drive a running Fresh with the same API plugins use. A script runs as
+Drive a running Fresco with the same API plugins use. A script runs as
 the body of an async function with an `editor` global; whatever it
 returns is printed as JSON. Source comes from a file or stdin.
 
-  fresh --cmd script run [FILE|-]           evaluate against this workspace
-  fresh --cmd script check [FILE|-]         parse + check editor.* names, no run
-  fresh --cmd script api <query> [--json]   search the API by name/description
-  fresh --cmd script types                  paths of the API declaration files
+  fresco --cmd script run [FILE|-]           evaluate against this workspace
+  fresco --cmd script check [FILE|-]         parse + check editor.* names, no run
+  fresco --cmd script api <query> [--json]   search the API by name/description
+  fresco --cmd script types                  paths of the API declaration files
 
 Driving the editor without a script file:
 
-  fresh --cmd init reload                   re-read + run ~/.config/fresh/init.ts
-  fresh --cmd command run \"<name>\"          run a command by its palette name
-  fresh --cmd command list [QUERY]          list registered commands
+  fresco --cmd init reload                   re-read + run ~/.config/fresco/init.ts
+  fresco --cmd command run \"<name>\"          run a command by its palette name
+  fresco --cmd command list [QUERY]          list registered commands
 
 Those three are the author → reload → test loop for customizing the editor:
 edit init.ts, `init reload`, then `command run` the command you registered.
 No keystroke from the user is needed at any point.
 
 Target a specific daemon with --session NAME (default: the daemon of the
-current working directory). Inside a Fresh terminal the right session is
+current working directory). Inside a Fresco terminal the right session is
 already in `$FRESH_SESSION`, so no flag is needed — reach for --session only
-when running from outside, where `fresh --cmd daemon list` names the
+when running from outside, where `fresco --cmd daemon list` names the
 candidates.
 
 Examples:
-  echo 'return editor.listBuffers().map(b => b.path)' | fresh --cmd script run
-  fresh --cmd script api splitWindow
-  fresh --cmd command list dashboard     # did my registerCommand land?
-  fresh --cmd script run make-tour.ts    # author + open a code tour
-                                         # (see: fresh --cmd help tour)
+  echo 'return editor.listBuffers().map(b => b.path)' | fresco --cmd script run
+  fresco --cmd script api splitWindow
+  fresco --cmd command list dashboard     # did my registerCommand land?
+  fresco --cmd script run make-tour.ts    # author + open a code tour
+                                         # (see: fresco --cmd help tour)
 
-See also: fresh --cmd help plugin   — the runtime contract, and a worked
+See also: fresco --cmd help plugin   — the runtime contract, and a worked
                                       auto-refreshing panel
 
 ",
@@ -4567,13 +4567,13 @@ See also: fresh --cmd help plugin   — the runtime contract, and a worked
     );
     out.push('\n');
     out.push_str(
-        "Search it with `fresh --cmd script api <query>`; `fresh --cmd script types`\n\
+        "Search it with `fresco --cmd script api <query>`; `fresco --cmd script types`\n\
          prints where the full declaration files live on disk.\n",
     );
     out
 }
 
-/// `fresh --cmd help plugin` — how to write init.ts / a plugin.
+/// `fresco --cmd help plugin` — how to write init.ts / a plugin.
 fn help_plugin() -> AnyhowResult<()> {
     print!("{}", plugin_help_text());
     Ok(())
@@ -4581,7 +4581,7 @@ fn help_plugin() -> AnyhowResult<()> {
 
 /// The `help plugin` body.
 ///
-/// Aimed squarely at someone — usually an agent, working in one of Fresh's own
+/// Aimed squarely at someone — usually an agent, working in one of Fresco's own
 /// embedded terminals — who has been asked to customize the editor and wants
 /// to get it right on the first attempt. The two things that stop that are
 /// (a) not knowing the runtime's shape, and (b) not knowing the one shape a
@@ -4591,17 +4591,17 @@ fn plugin_help_text() -> String {
     String::from(
         r#"Writing init.ts and plugins (TypeScript)
 
-Your customization lives in ~/.config/fresh/init.ts. It is loaded as a
+Your customization lives in ~/.config/fresco/init.ts. It is loaded as a
 plugin at startup and can register commands, hook events, draw panels, and
-run processes. `fresh --cmd init reload` re-runs it; nothing needs restarting.
+run processes. `fresco --cmd init reload` re-runs it; nothing needs restarting.
 
 THE DEV LOOP (no keystrokes from the user required)
 
-  1. edit  ~/.config/fresh/init.ts
-  2. fresh --cmd init check           syntax, without running it
-  3. fresh --cmd init reload          re-read + run it; errors exit non-zero
-  4. fresh --cmd command run "My Command"     exercise what you registered
-     fresh --cmd command list My                 ...or check it registered
+  1. edit  ~/.config/fresco/init.ts
+  2. fresco --cmd init check           syntax, without running it
+  3. fresco --cmd init reload          re-read + run it; errors exit non-zero
+  4. fresco --cmd command run "My Command"     exercise what you registered
+     fresco --cmd command list My                 ...or check it registered
 
   Reloading drops the previous copy's commands, handlers, event subscriptions,
   settings and timers before the new source runs, so iterating never stacks
@@ -4790,10 +4790,10 @@ VERIFYING YOUR OWN WORK
   `setStatus` has no read side, so asserting on a status message from outside
   looks impossible. It is not: every status message is appended to
   `<state-dir>/logs/status-<pid>.log`, where <state-dir> is the one
-  `fresh --cmd config paths` prints. That file is the readback channel for
+  `fresco --cmd config paths` prints. That file is the readback channel for
   "did my command actually run and report what I expect".
 
-  For anything else, `fresh --cmd script run` reads live state directly —
+  For anything else, `fresco --cmd script run` reads live state directly —
   `listBuffers()`, `getBufferText(id)`, `listSplits()`. Remember
   `await editor.flush()` before reading back after a layout change, and that
   a script runs in its own realm (above), so it sees the editor's state but
@@ -4801,14 +4801,14 @@ VERIFYING YOUR OWN WORK
 
 DISCOVERY
 
-  fresh --cmd script api <query>    search the API by name or description
-  fresh --cmd script types          where fresh.d.ts / plugins.d.ts live
-  fresh --cmd help script           driving a running editor from a shell
+  fresco --cmd script api <query>    search the API by name or description
+  fresco --cmd script types          where fresh.d.ts / plugins.d.ts live
+  fresco --cmd help script           driving a running editor from a shell
 "#,
     )
 }
 
-/// `fresh --cmd script types` — print where the API declarations live.
+/// `fresco --cmd script types` — print where the API declarations live.
 ///
 /// The discovery verb. An agent that has just learned it can script the editor
 /// needs to know what it may call; these two files are the answer, and they are
@@ -4823,11 +4823,11 @@ fn script_types() -> AnyhowResult<()> {
     Ok(())
 }
 
-/// `fresh --cmd script run [FILE|-]` — evaluate a script in the editor.
+/// `fresco --cmd script run [FILE|-]` — evaluate a script in the editor.
 ///
 /// The source comes from a file or stdin rather than argv: a script is
 /// multi-line and full of quotes, and threading that through a shell's argument
-/// vector mangles it. `fresh --cmd script run < s.ts`, a heredoc, or an explicit
+/// vector mangles it. `fresco --cmd script run < s.ts`, a heredoc, or an explicit
 /// path all work.
 ///
 /// Whatever the script returns is printed as JSON; a throw becomes a non-zero
@@ -4918,7 +4918,7 @@ fn submit_script_capture(
     Ok(text)
 }
 
-/// `fresh --cmd init reload` — re-read and run `~/.config/fresh/init.ts` in
+/// `fresco --cmd init reload` — re-read and run `~/.config/fresco/init.ts` in
 /// the running editor.
 ///
 /// The loop this closes: an agent editing init.ts on the user's behalf could
@@ -4946,7 +4946,7 @@ fn init_reload_script() -> &'static str {
     "#
 }
 
-/// `fresh --cmd command run "<name>"` — invoke a registered command by the
+/// `fresco --cmd command run "<name>"` — invoke a registered command by the
 /// name the palette shows, built-in or plugin-registered.
 ///
 /// This is how an agent tests a command it just registered *through the path
@@ -4969,7 +4969,7 @@ fn command_run_script(name: &str) -> AnyhowResult<String> {
     ))
 }
 
-/// `fresh --cmd command list [QUERY]` — every registered command, optionally
+/// `fresco --cmd command list [QUERY]` — every registered command, optionally
 /// filtered by a case-insensitive substring of the name or description.
 ///
 /// Answers "did my registerCommand land, and under what name" in one call —
@@ -5106,7 +5106,7 @@ fn read_api_declarations() -> AnyhowResult<Vec<(String, String)>> {
     Ok(out)
 }
 
-/// `fresh --cmd script api <query>` — find API members by name or description.
+/// `fresco --cmd script api <query>` — find API members by name or description.
 ///
 /// The alternative is grepping a 4000-line declaration file, where a search for
 /// "split" returns every unrelated sense of the word. Matching the name first
@@ -5224,7 +5224,7 @@ fn script_api(query: &str, flags: &[&str]) -> AnyhowResult<()> {
     Ok(())
 }
 
-/// `fresh --cmd script check [FILE|-]` — validate a script without running it.
+/// `fresco --cmd script check [FILE|-]` — validate a script without running it.
 ///
 /// Two failure modes are worth catching before a script touches a live
 /// workspace a human is looking at: it doesn't parse, and it calls an `editor`
@@ -5286,7 +5286,7 @@ fn script_check(from: &[&str]) -> AnyhowResult<()> {
                 let list: Vec<&str> = near.iter().take(5).map(|s| s.as_str()).collect();
                 eprintln!("  closest: {}", list.join(", "));
             }
-            eprintln!("  search:  fresh --cmd script api {}", name);
+            eprintln!("  search:  fresco --cmd script api {}", name);
         }
         std::process::exit(1);
     }
@@ -5320,7 +5320,7 @@ fn run_attach_command(args: &Args) -> AnyhowResult<()> {
     )
 }
 
-/// A bare `fresh` — no files, no flags, nothing — with
+/// A bare `fresco` — no files, no flags, nothing — with
 /// `orchestrator_mode` left on.
 ///
 /// The whole launch is "attach to the shared daemon, starting it if it isn't
@@ -5343,16 +5343,16 @@ fn run_orchestrator_launch() -> AnyhowResult<()> {
     )
 }
 
-/// Whether a bare `fresh` should launch into Orchestrator mode.
+/// Whether a bare `fresco` should launch into Orchestrator mode.
 ///
 /// Three conditions, and all of them are about *this* invocation rather than
 /// about the editor:
 ///
 ///   * the command line is empty (`argv.len() == 1`) — a file or a flag,
 ///     any flag, means "just this, here", and is left alone;
-///   * stdin is a terminal — `fresh` under `$GIT_EDITOR`, in a pipe, or as
+///   * stdin is a terminal — `fresco` under `$GIT_EDITOR`, in a pipe, or as
 ///     a subprocess is not someone sitting down to work; and
-///   * we are not already *inside* a Fresh editor's embedded terminal.
+///   * we are not already *inside* a Fresco editor's embedded terminal.
 ///
 /// That last one is not a nicety. Orchestrator mode attaches to the shared
 /// daemon, and a terminal buffer inside that very daemon is exactly where
@@ -5360,7 +5360,7 @@ fn run_orchestrator_launch() -> AnyhowResult<()> {
 /// client that lives inside its own output, which is not a second editor
 /// but a feedback loop — the pane fills with shredded frames. Falling
 /// through here launches an ordinary inline editor in the terminal, which
-/// is what a nested `fresh` did before Orchestrator mode existed and which
+/// is what a nested `fresco` did before Orchestrator mode existed and which
 /// renders perfectly well. `FRESH_SESSION` is the signal because it is what
 /// every local embedded terminal advertises (see
 /// `server::local_control`); a stale or unreachable value costs nothing,
@@ -5580,7 +5580,7 @@ fn run_attach(
         Ok(client::ClientExitReason::Detached) => {
             tracing::debug!("Client exit: Detached");
             eprintln!("Detached from daemon. The daemon keeps running.");
-            eprintln!("Reattach with: fresh -a  or  fresh --cmd daemon attach");
+            eprintln!("Reattach with: fresco -a  or  fresco --cmd daemon attach");
         }
         Ok(client::ClientExitReason::VersionMismatch { server_version }) => {
             tracing::debug!("Client exit: VersionMismatch");
@@ -5606,13 +5606,13 @@ fn print_deprecation_warnings(cli: &Cli) {
 
     // These flags existed in master and are now reorganized into --cmd commands
     if cli.dump_config {
-        eprintln!("warning: --dump-config is deprecated, use `fresh --cmd config show` instead");
+        eprintln!("warning: --dump-config is deprecated, use `fresco --cmd config show` instead");
     }
     if cli.show_paths {
-        eprintln!("warning: --show-paths is deprecated, use `fresh --cmd config paths` instead");
+        eprintln!("warning: --show-paths is deprecated, use `fresco --cmd config paths` instead");
     }
     if cli.init.is_some() {
-        eprintln!("warning: --init is deprecated, use `fresh --cmd init` instead");
+        eprintln!("warning: --init is deprecated, use `fresco --cmd init` instead");
     }
 }
 
@@ -5736,7 +5736,7 @@ fn update_command(args: &Args) -> AnyhowResult<()> {
         let _ = args;
         anyhow::bail!(
             "this build was compiled without self-update support; \
-             download the latest release from https://github.com/sinelaw/fresh/releases"
+             download the latest release from https://github.com/agustif/fresco/releases"
         );
     }
 }
@@ -5808,7 +5808,7 @@ fn run_if_subcommand(
         return Some(run_attach_command(args));
     }
     // `--web` runs the session daemon in the foreground with the web bridge
-    // hosted inside it, so the browser and any `fresh -a` terminal share one
+    // hosted inside it, so the browser and any `fresco -a` terminal share one
     // editor. It is NOT a separate editor process: the daemon binds the usual
     // session sockets for this working directory (or `--session NAME`) first,
     // so a session that is already live is joined rather than shadowed.
@@ -5873,7 +5873,7 @@ fn pre_clap_locale_override() -> Option<String> {
 /// Render the localized `after_help` block from translation keys.
 ///
 /// Section headers and prose are translated via `i18n::t`; literal
-/// CLI invocations (e.g. `fresh -a mysession`) are kept verbatim
+/// CLI invocations (e.g. `fresco -a mysession`) are kept verbatim
 /// because they are commands the user would actually type.
 fn build_localized_after_help() -> String {
     use fresh::i18n::t;
@@ -5987,23 +5987,23 @@ fn build_localized_after_help() -> String {
         t("cli.example.range_msg")
     ));
     out.push_str(&format!(
-        "  fresh -a                                     {}\n",
+        "  fresco -a                                     {}\n",
         t("cli.example.attach")
     ));
     out.push_str(&format!(
-        "  fresh -a mysession                           {}\n",
+        "  fresco -a mysession                           {}\n",
         t("cli.example.attach_name")
     ));
     out.push_str(&format!(
-        "  fresh --cmd daemon new proj                  {}\n",
+        "  fresco --cmd daemon new proj                  {}\n",
         t("cli.example.new_session")
     ));
     out.push_str(&format!(
-        "  fresh --cmd daemon open-file . main.rs      {}\n",
+        "  fresco --cmd daemon open-file . main.rs      {}\n",
         t("cli.example.open_in_dir")
     ));
     out.push_str(&format!(
-        "  fresh --cmd daemon open-file proj a.rs      {}\n",
+        "  fresco --cmd daemon open-file proj a.rs      {}\n",
         t("cli.example.open_in_named")
     ));
     out.push('\n');
@@ -6024,17 +6024,17 @@ fn build_localized_after_help() -> String {
     out.push_str(&format!("  {}\n\n", t("cli.guided.wait_intro")));
     out.push_str(&format!("  {}\n\n", t("cli.guided.session_dot")));
     out.push_str(&format!("  {}\n", t("cli.guided.annotation")));
-    out.push_str("    fresh --cmd daemon open-file . 'src/main.rs:10-25@\"msg\"' --wait\n\n");
+    out.push_str("    fresco --cmd daemon open-file . 'src/main.rs:10-25@\"msg\"' --wait\n\n");
     out.push_str(&format!("  {}\n", t("cli.guided.markdown")));
     out.push_str(
-        "    fresh --cmd daemon open-file . \\\n      $'src/main.rs:10-25@\"**Title**\\nBody text here\"' --wait\n\n",
+        "    fresco --cmd daemon open-file . \\\n      $'src/main.rs:10-25@\"**Title**\\nBody text here\"' --wait\n\n",
     );
     out.push_str(&format!("  {}\n", t("cli.guided.walkthrough")));
-    out.push_str("    fresh --cmd daemon open-file . 'a.rs:1-10@\"Step 1\"' --wait\n");
-    out.push_str("    fresh --cmd daemon open-file . 'b.rs:5-20@\"Step 2\"' --wait\n");
-    out.push_str("    fresh --cmd daemon open-file . 'c.rs:30@\"Step 3\"'   --wait\n\n");
+    out.push_str("    fresco --cmd daemon open-file . 'a.rs:1-10@\"Step 1\"' --wait\n");
+    out.push_str("    fresco --cmd daemon open-file . 'b.rs:5-20@\"Step 2\"' --wait\n");
+    out.push_str("    fresco --cmd daemon open-file . 'c.rs:30@\"Step 3\"'   --wait\n\n");
     out.push_str(&format!("  {}\n", t("cli.guided.git_editor")));
-    out.push_str("    git config core.editor 'fresh --cmd daemon open-file . --wait'\n\n");
+    out.push_str("    git config core.editor 'fresco --cmd daemon open-file . --wait'\n\n");
 
     out.push_str(&format!(
         "{}: https://getfresh.dev/docs",
@@ -6109,7 +6109,7 @@ fn real_main() -> AnyhowResult<()> {
     // Print deprecation warnings for old flags
     print_deprecation_warnings(&cli);
 
-    // A bare `fresh` on a terminal, with `orchestrator_mode` on: hand the
+    // A bare `fresco` on a terminal, with `orchestrator_mode` on: hand the
     // whole launch to the shared daemon and relay it. Checked here, after
     // clap, so `--help` and `--version` still answer for themselves — both
     // put something on the command line, so neither reaches this.
@@ -6165,7 +6165,7 @@ fn real_main() -> AnyhowResult<()> {
     args.files = apply_plus_line_args(std::mem::take(&mut args.files))?;
     let args = args;
 
-    // Expose `FRESH_INTERACTIVE=1` on the editor's process env when Fresh
+    // Expose `FRESH_INTERACTIVE=1` on the editor's process env when Fresco
     // is launched as a human-interactive editor (stdin is a TTY, not a
     // CLI sub-command, not --stdin / --attach / --server). init.ts (and
     // plugins in general) read this via getEnv to branch on "real"
@@ -6183,7 +6183,7 @@ fn real_main() -> AnyhowResult<()> {
         return result;
     }
 
-    // If launched from inside Fresh's own embedded terminal (FRESH_SESSION
+    // If launched from inside Fresco's own embedded terminal (FRESH_SESSION
     // is set), forward file/dir opens to that parent editor instead of
     // starting a second editor in the terminal. Returns Some(..) when the
     // request was forwarded (we're done); None to fall through and launch
@@ -6217,6 +6217,9 @@ fn real_main() -> AnyhowResult<()> {
         _remote_session: remote_session,
     } = initialize_app(&args).context("Failed to initialize application")?;
 
+    #[cfg(not(target_os = "linux"))]
+    let _ = gpm_client;
+
     let current_working_dir = initial_working_dir;
     let (terminal_width, terminal_height) = terminal_size;
 
@@ -6245,7 +6248,7 @@ fn real_main() -> AnyhowResult<()> {
         .take()
         .map(|h| (h.warning.receiver, h.warning.path));
 
-    // Bind this process's local control socket so a `fresh` launched from
+    // Bind this process's local control socket so a `fresco` launched from
     // inside an embedded terminal forwards opens back here (see
     // `try_forward_nested` / `server::local_control`). Best-effort: if it
     // fails, the editor runs normally and nested launches just open inline.
@@ -6307,7 +6310,7 @@ fn real_main() -> AnyhowResult<()> {
             true, // defer_plugin_load: TUI startup; plugin loads run on the
             // plugin thread and arrive via AsyncBridge each tick.
             //
-            // Never orchestrator mode: a bare `fresh` with the setting on
+            // Never orchestrator mode: a bare `fresco` with the setting on
             // hands off to the daemon long before this loop, so an editor
             // built here is by construction an ordinary in-terminal launch.
             false,
@@ -6331,7 +6334,7 @@ fn real_main() -> AnyhowResult<()> {
         // the panic at `effective_active_pair` when workspace
         // restore tried to open files immediately afterwards).
 
-        // User init.ts: auto-load from ~/.config/fresh/init.ts through the
+        // User init.ts: auto-load from ~/.config/fresco/init.ts through the
         // same pipeline as "Load Plugin from Buffer". Respects `--no-init`
         // and `--safe`, and is short-circuited by the crash fuse after
         // repeated failures. Async to avoid blocking the boot sequence;
@@ -6444,10 +6447,10 @@ fn real_main() -> AnyhowResult<()> {
                 fresh::services::release_checker::UpdateKind::SelfContained
                     | fresh::services::release_checker::UpdateKind::DownloadPackage
             ) {
-                eprintln!("Update with: fresh --cmd update");
+                eprintln!("Update with: fresco --cmd update");
             } else {
                 eprintln!(
-                    "Download from: https://github.com/sinelaw/fresh/releases/tag/v{}",
+                    "Download from: https://github.com/agustif/fresco/releases/tag/v{}",
                     update_result.latest_version
                 );
             }
@@ -6707,7 +6710,7 @@ where
     let mut last_input_time = editor.time_source().now();
 
     loop {
-        // Apply any nested-forward requests (file/dir opens from a `fresh`
+        // Apply any nested-forward requests (file/dir opens from a `fresco`
         // run inside an embedded terminal) before housekeeping, so the
         // queued opens are drained by `editor_tick` on this same iteration.
         if fresh::server::local_control::pump(editor) {
@@ -7100,7 +7103,7 @@ mod tests {
     /// The scripts the convenience verbs submit must parse, and must call
     /// only API members this build actually has.
     ///
-    /// These sources never pass through `fresh --cmd script check` — they are
+    /// These sources never pass through `fresco --cmd script check` — they are
     /// built in Rust and sent straight down the socket — so without this a
     /// typo in one would surface as a runtime failure the first time a user
     /// ran the verb, reported as "script failed" with a QuickJS message about
@@ -7204,7 +7207,7 @@ mod tests {
     #[test]
     fn test_help_tour_schema_is_valid_json() {
         let schema: serde_json::Value = serde_json::from_str(TOUR_SCHEMA_JSON).unwrap();
-        assert_eq!(schema["title"], "Fresh Code Tour Manifest");
+        assert_eq!(schema["title"], "Fresco Code Tour Manifest");
         assert!(schema["definitions"]["TourStep"].is_object());
     }
 

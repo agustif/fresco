@@ -7,8 +7,8 @@ use crate::provenance::Provenance;
 use std::path::Path;
 
 /// The tool ref mise installs `fresh` under, matching the README's
-/// `mise use github:sinelaw/fresh`.
-const MISE_TOOL: &str = "github:sinelaw/fresh";
+/// `mise use github:agustif/fresco`.
+const MISE_TOOL: &str = "github:agustif/fresco";
 
 /// The broad category of update mechanism for a channel.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -177,9 +177,9 @@ fn manual_instructions(channel: Channel) -> String {
         // Nothing is published to these, so there is no same-channel
         // continuation to name — see `kind_for`.
         Channel::Scoop | Channel::Chocolatey => "no package is published for this tool; see \
-             https://github.com/sinelaw/fresh/releases"
+             https://github.com/agustif/fresco/releases"
             .to_string(),
-        _ => "see https://github.com/sinelaw/fresh/releases".to_string(),
+        _ => "see https://github.com/agustif/fresco/releases".to_string(),
     }
 }
 
@@ -258,7 +258,7 @@ pub fn plan(prov: &Provenance) -> UpdatePlan {
         // `install @latest` means the same thing on npm 6, 10 and 11.
         Channel::Npm => Some(vec!["npm", "install", "-g", &npm_latest]),
         // mise installs this as a github backend tool (README:
-        // `mise use github:sinelaw/fresh`), and that flake-style ref *is* the
+        // `mise use github:agustif/fresco`), and that flake-style ref *is* the
         // tool's name in mise. A bare `fresh` matches nothing.
         //
         // `--bump` because plain `mise upgrade` keeps the range recorded in
@@ -300,7 +300,7 @@ pub fn plan(prov: &Provenance) -> UpdatePlan {
         _ => command
             .as_ref()
             .map(|c| c.join(" "))
-            .unwrap_or_else(|| "see https://github.com/sinelaw/fresh/releases".to_string()),
+            .unwrap_or_else(|| "see https://github.com/agustif/fresco/releases".to_string()),
     };
 
     UpdatePlan {
@@ -532,7 +532,7 @@ mod tests {
             (Channel::Cargo, "crates.io"),
             (Channel::CargoBinstall, "crates.io + release archives"),
             (Channel::Npm, "@fresh-editor/fresh-editor"),
-            (Channel::Mise, "github:sinelaw/fresh"),
+            (Channel::Mise, "github:agustif/fresco"),
             (Channel::AurBin, "AUR fresh-editor-bin"),
         ];
         // We ship no artifact snap, scoop or chocolatey could install, and no
@@ -625,11 +625,11 @@ mod tests {
     /// name either, so a plausible-looking guess is wrong in both cases.
     #[test]
     fn tool_refs_match_how_each_tool_actually_installed_it() {
-        // README: `mise use github:sinelaw/fresh` — the flake-style ref is the
+        // README: `mise use github:agustif/fresco` — the flake-style ref is the
         // tool's name in mise, so a bare `fresh` matches nothing.
         assert_eq!(
             plan(&prov(Channel::Mise)).human,
-            "mise upgrade --bump github:sinelaw/fresh"
+            "mise upgrade --bump github:agustif/fresco"
         );
         // flake.nix sets `pname = "fresh"`, not the `fresh-editor` package name
         // the receipt carries.

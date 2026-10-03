@@ -22,9 +22,9 @@
       "default": null
     },
     "check_for_updates": {
-      "description": "Check for new versions on startup (default: true).\nAlso sends basic anonymous telemetry (version, OS, terminal type).",
+      "description": "Check for new versions on startup (default: false in Fresco).\nAlso sends basic anonymous telemetry (version, OS, terminal type).",
       "type": "boolean",
-      "default": true
+      "default": false
     },
     "self_update": {
       "description": "Offer to update from inside the editor when a new version is found (default: true).\nWhen off, the status-bar indicator only tells you an update exists.\nNeeds `check_for_updates` and an install method that can self-update.",

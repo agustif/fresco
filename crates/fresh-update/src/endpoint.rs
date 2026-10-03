@@ -46,10 +46,11 @@ pub const RELEASES_URL_ENV: &str = "FRESH_RELEASES_URL";
 pub const DOWNLOAD_BASE_ENV: &str = "FRESH_DOWNLOAD_BASE";
 
 /// The GitHub repository releases are published to.
-pub const REPO: &str = "sinelaw/fresh";
+pub const REPO: &str = "agustif/fresco";
 
 /// The default release-metadata URL.
-pub const DEFAULT_RELEASES_URL: &str = "https://api.github.com/repos/sinelaw/fresh/releases/latest";
+pub const DEFAULT_RELEASES_URL: &str =
+    "https://api.github.com/repos/agustif/fresco/releases/latest";
 
 /// Why an endpoint was rejected.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -415,7 +416,7 @@ mod tests {
         ));
         // Plain http, even to an allowed host: a redirect that downgrades is
         // the exact case this stops.
-        assert!(!is_trusted("http://github.com/sinelaw/fresh"));
+        assert!(!is_trusted("http://github.com/agustif/fresco"));
         assert!(!is_trusted("https://evil.example/fresh.deb"));
         // Not a prefix match: `github.com.evil.example` is a different host.
         assert!(!is_trusted("https://github.com.evil.example/fresh.deb"));

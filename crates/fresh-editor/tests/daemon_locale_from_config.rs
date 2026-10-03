@@ -36,7 +36,7 @@ const FILE_JA: &str = "ファイル";
 /// English on screen came from the config file or the command line, not
 /// from `LANG`.
 fn isolated_fresh(home: &Path) -> Command {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_fresh"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_fresco"));
     cmd.current_dir(home.join("project"))
         .env("HOME", home)
         .env("TMPDIR", home)
@@ -59,7 +59,7 @@ fn isolated_fresh(home: &Path) -> Command {
 fn setup(home: &Path, locale: Option<&str>) {
     std::fs::create_dir_all(home.join("project")).unwrap();
     std::fs::create_dir_all(home.join("run")).unwrap();
-    let config_dir = home.join("config").join("fresh");
+    let config_dir = home.join("config").join("fresco");
     std::fs::create_dir_all(&config_dir).unwrap();
 
     let locale = locale
@@ -75,7 +75,7 @@ fn setup(home: &Path, locale: Option<&str>) {
 /// Stop the daemon this test started, so it does not idle on in the
 /// background holding a socket in the temp tree.
 fn kill_daemon(home: &Path, session: &str) {
-    let pid_file = home.join("run").join("fresh").join(format!("{session}.pid"));
+    let pid_file = home.join("run").join("fresco").join(format!("{session}.pid"));
     if let Ok(pid) = std::fs::read_to_string(&pid_file) {
         if let Ok(pid) = pid.trim().parse::<i32>() {
             // SAFETY: a plain `kill(2)`; an already-dead pid just returns

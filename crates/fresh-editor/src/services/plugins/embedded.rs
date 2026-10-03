@@ -49,7 +49,7 @@ const PLUGINS_CONTENT_HASH: &str = include_str!(concat!(env!("OUT_DIR"), "/plugi
 
 /// Get the cache directory for extracted plugins
 fn get_cache_dir() -> Option<PathBuf> {
-    dirs::cache_dir().map(|p| p.join("fresh").join("embedded-plugins"))
+    dirs::cache_dir().map(|p| p.join("fresco").join("embedded-plugins"))
 }
 
 /// Extract embedded plugins to the cache directory.

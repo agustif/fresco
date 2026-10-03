@@ -36,7 +36,7 @@ const SWEPT: &str = "Thread Backtrace Dump";
 /// under test here is a signal reaching the editor in *this* terminal, so
 /// the mode is turned off for the same reason a user would turn it off.
 fn isolated_fresh(home: &Path) -> Command {
-    let config_dir = home.join("config").join("fresh");
+    let config_dir = home.join("config").join("fresco");
     std::fs::create_dir_all(&config_dir).expect("create the isolated config dir");
     std::fs::write(
         config_dir.join("config.json"),
@@ -44,7 +44,7 @@ fn isolated_fresh(home: &Path) -> Command {
     )
     .expect("write the isolated config");
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_fresh"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_fresco"));
     cmd.current_dir(home)
         .env("TMPDIR", home)
         .env("HOME", home)

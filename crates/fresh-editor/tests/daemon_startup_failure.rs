@@ -23,7 +23,7 @@ fn a_client_reports_a_daemon_that_dies_during_startup() {
     let run = home.join("r".repeat(120));
     std::fs::create_dir_all(&run).unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_fresh"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_fresco"));
     cmd.current_dir(home.join("project"))
         .env("HOME", &home)
         .env("TMPDIR", &home)

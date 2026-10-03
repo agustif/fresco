@@ -1,6 +1,6 @@
 {
   "theme": "high-contrast",
-  "check_for_updates": true,
+  "check_for_updates": false,
   "editor": {
     "use_tabs": false,
     "tab_size": 4,

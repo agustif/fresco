@@ -57,5 +57,5 @@ pub fn get_data_dir() -> std::io::Result<PathBuf> {
             "Could not determine data directory",
         )
     })?;
-    Ok(data_dir.join("fresh"))
+    Ok(data_dir.join("fresco"))
 }

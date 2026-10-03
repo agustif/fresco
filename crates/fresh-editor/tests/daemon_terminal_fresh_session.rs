@@ -57,7 +57,7 @@ const TERMINAL_OPENED: &str = "Terminal 0 opened";
 /// daemon this test starts cannot meet one from another test — or from the
 /// developer running it.
 fn isolated_fresh(home: &Path) -> Command {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_fresh"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_fresco"));
     cmd.current_dir(home.join("project"))
         .env("HOME", home)
         .env("TMPDIR", home)
@@ -77,7 +77,7 @@ fn isolated_fresh(home: &Path) -> Command {
 fn setup(home: &Path) {
     std::fs::create_dir_all(home.join("project")).unwrap();
     std::fs::create_dir_all(home.join("run")).unwrap();
-    let config_dir = home.join("config").join("fresh");
+    let config_dir = home.join("config").join("fresco");
     std::fs::create_dir_all(&config_dir).unwrap();
     std::fs::write(
         config_dir.join("config.json"),
@@ -88,7 +88,7 @@ fn setup(home: &Path) {
 
 /// The pid file a daemon named `session` writes under this isolated tree.
 fn daemon_pid_file(home: &Path, session: &str) -> std::path::PathBuf {
-    home.join("run").join("fresh").join(format!("{session}.pid"))
+    home.join("run").join("fresco").join(format!("{session}.pid"))
 }
 
 /// Stop the daemon this test started, so it does not idle on in the

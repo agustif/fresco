@@ -43,7 +43,7 @@ fn leftovers(dir: &Path) -> Vec<PathBuf> {
 /// `fresh` with its temp dir, config and state confined to `home`, so
 /// anything found under `$TMPDIR` belongs to this test.
 fn isolated_fresh(home: &Path) -> Command {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_fresh"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_fresco"));
     cmd.current_dir(home)
         .env("TMPDIR", home)
         .env("HOME", home)

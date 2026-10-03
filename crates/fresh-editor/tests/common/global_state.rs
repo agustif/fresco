@@ -190,7 +190,7 @@ pub fn isolated_dir_context(
     // fixtures into (`<data_dir>/orchestrator/windows.json`, `workspaces/`) is
     // unchanged from when this was `$XDG_DATA_HOME/fresh`, and keeping the
     // name keeps those paths readable next to the real ones.
-    let data_dir = base.join("xdg-data").join("fresh");
+    let data_dir = base.join("xdg-data").join("fresco");
     let pin = pin_data_dir(data_dir.clone());
     let dir_context = fresh::config_io::DirectoryContext {
         data_dir,

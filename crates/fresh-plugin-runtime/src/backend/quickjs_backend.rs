@@ -1198,6 +1198,21 @@ fn parse_label_align(v: Option<&str>) -> fresh_core::api::LabelAlign {
 #[plugin_api_impl]
 #[rquickjs::methods(rename_all = "camelCase")]
 impl JsEditorApi {
+    /// Render Markdown and Mermaid as styled terminal spans. Maximum input: 256 KiB.
+    /// Width controls diagram and table layout; theme colors resolve in the editor.
+    #[plugin_api(ts_return = "TextPropertyEntry[]")]
+    pub fn render_markdown_preview<'js>(
+        &self,
+        ctx: rquickjs::Ctx<'js>,
+        source: String,
+        width: u32,
+    ) -> rquickjs::Result<Value<'js>> {
+        let entries = crate::markdown_preview::render(&source, width)
+            .map_err(|message| rquickjs::Exception::throw_message(&ctx, message))?;
+        rquickjs_serde::to_value(ctx, &entries)
+            .map_err(|e| rquickjs::Error::new_from_js_message("serialize", "", e.to_string()))
+    }
+
     // === Buffer Queries ===
 
     /// Get the plugin API version. Plugins can check this to verify

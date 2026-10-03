@@ -458,7 +458,7 @@ pub struct Config {
     #[serde(default)]
     pub locale: LocaleName,
 
-    /// Check for new versions on startup (default: true).
+    /// Check for new versions on startup (default: false in Fresco).
     /// Also sends basic anonymous telemetry (version, OS, terminal type).
     #[serde(default = "default_true")]
     pub check_for_updates: bool,
@@ -2963,7 +2963,7 @@ impl Default for Config {
             version: 0,
             theme: default_theme_name(),
             locale: LocaleName::default(),
-            check_for_updates: true,
+            check_for_updates: false,
             self_update: true,
             orchestrator_mode: true,
             editor: EditorConfig::default(),

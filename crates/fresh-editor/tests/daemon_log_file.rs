@@ -12,7 +12,7 @@ use std::time::{Duration, Instant};
 
 /// A `fresh` whose config, state and sockets all live under `home`.
 fn isolated_fresh(home: &Path) -> Command {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_fresh"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_fresco"));
     cmd.current_dir(home.join("project"))
         .env("HOME", home)
         .env("TMPDIR", home)

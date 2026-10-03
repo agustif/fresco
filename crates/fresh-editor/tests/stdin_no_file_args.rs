@@ -40,7 +40,7 @@ const ROWS: u16 = 30;
 /// `fresh` with its temp dir, config and state confined to `home`, and its
 /// language pinned so the English predicates below can match.
 fn isolated_fresh(home: &Path) -> Command {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_fresh"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_fresco"));
     cmd.current_dir(home)
         .env("TMPDIR", home)
         .env("HOME", home)

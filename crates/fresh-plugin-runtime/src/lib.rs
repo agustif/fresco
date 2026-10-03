@@ -4,3 +4,5 @@ pub mod thread;
 pub mod ts_export;
 
 pub use thread::{PluginConfig, PluginThreadHandle};
+
+mod markdown_preview;

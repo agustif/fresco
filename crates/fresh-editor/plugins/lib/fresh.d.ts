@@ -3115,6 +3115,11 @@ type WindowPath = {
 */
 interface EditorAPI {
 	/**
+	* Render Markdown and Mermaid as styled terminal spans. Maximum input: 256 KiB.
+	* Width controls diagram and table layout; theme colors resolve in the editor.
+	*/
+	renderMarkdownPreview(source: string, width: number): TextPropertyEntry[];
+	/**
 	* Get the plugin API version. Plugins can check this to verify
 	* the editor supports the features they need.
 	*/

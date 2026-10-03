@@ -44,13 +44,13 @@ fn get_xdg_log_dir() -> Option<PathBuf> {
     if let Ok(state_home) = std::env::var("XDG_STATE_HOME") {
         let path = PathBuf::from(state_home);
         if path.is_absolute() {
-            return Some(path.join("fresh").join("logs"));
+            return Some(path.join("fresco").join("logs"));
         }
     }
 
     // Fall back to ~/.local/state
     if let Some(home) = home_dir() {
-        return Some(home.join(".local").join("state").join("fresh").join("logs"));
+        return Some(home.join(".local").join("state").join("fresco").join("logs"));
     }
 
     None
@@ -290,7 +290,7 @@ pub fn print_all_paths(dir_context: &crate::config_io::DirectoryContext) {
     let stdout = std::io::stdout();
     let mut handle = stdout.lock();
 
-    // Config directory (~/.config/fresh)
+    // Config directory (~/.config/fresco)
     let config_dir = &dir_context.config_dir;
 
     // Data directory (~/.local/share/fresh)
@@ -299,7 +299,7 @@ pub fn print_all_paths(dir_context: &crate::config_io::DirectoryContext) {
     // State/logs directory
     let logs_dir = log_dir().clone();
 
-    writeln!(handle, "Fresh directories:").ok();
+    writeln!(handle, "Fresco directories:").ok();
     writeln!(handle).ok();
 
     writeln!(handle, "Config:     {}", config_dir.display()).ok();

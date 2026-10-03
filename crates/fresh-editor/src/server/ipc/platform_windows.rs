@@ -14,7 +14,7 @@ use windows_sys::Win32::System::Pipes::PeekNamedPipe;
 pub fn get_socket_dir() -> io::Result<PathBuf> {
     let local_app_data = std::env::var("LOCALAPPDATA")
         .unwrap_or_else(|_| std::env::temp_dir().display().to_string());
-    let socket_dir = PathBuf::from(local_app_data).join("fresh").join("sockets");
+    let socket_dir = PathBuf::from(local_app_data).join("fresco").join("sockets");
     std::fs::create_dir_all(&socket_dir)?;
     Ok(socket_dir)
 }
@@ -27,8 +27,8 @@ pub fn socket_name_for_path(path: &Path) -> io::Result<interprocess::local_socke
         .file_name()
         .and_then(|n| n.to_str())
         .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "Invalid socket path"))?;
-    // Use format: @fresh-{name} for namespaced socket
-    let ns_name = format!("fresh-{}", name.replace(".sock", ""));
+    // Use format: @fresco-{name} for namespaced socket
+    let ns_name = format!("fresco-{}", name.replace(".sock", ""));
     ns_name
         .to_ns_name::<GenericNamespaced>()
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e.to_string()))

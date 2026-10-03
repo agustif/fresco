@@ -3,7 +3,7 @@ name = "fresh-editor"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
-default-run = "fresh"
+default-run = "fresco"
 autotests = false
 description = "A lightweight, fast terminal-based text editor with LSP support and TypeScript plugins"
 license.workspace = true
@@ -16,7 +16,7 @@ categories = ["command-line-utilities", "text-editors"]
 exclude = ["web-ui/test/**"]
 
 [[bin]]
-name = "fresh"
+name = "fresco"
 path = "src/main.rs"
 required-features = ["runtime"]
 
@@ -63,7 +63,7 @@ path = "tests/scene_parity.rs"
 required-features = ["web"]
 
 [features]
-default = ["plugins", "runtime", "embed-plugins", "tree-sitter", "http", "self-update"]
+default = ["plugins", "runtime", "embed-plugins", "tree-sitter", "http"]
 plugins = [
     "dep:fresh-plugin-runtime",
     "dep:fresh-parser-js",

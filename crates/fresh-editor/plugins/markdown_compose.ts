@@ -80,7 +80,10 @@ function activeComposeWidth(): number | null {
 // newly opened markdown buffers.  Toggled by the "Toggle Compose/Preview
 // (All Files)" command.  Persisted across sessions via global plugin state.
 function getGlobalComposeEnabled(): boolean {
-  return (editor.getGlobalState("globalComposeEnabled") as boolean) ?? false;
+  const saved = editor.getGlobalState("globalComposeEnabled") as boolean | null;
+  // Fresco owns its default; the upstream compose plugin remains usable alone.
+  const fresco = editor.getPluginApi("fresco-markdown") as { defaultCompose: boolean } | null;
+  return saved ?? fresco?.defaultCompose ?? false;
 }
 function setGlobalComposeEnabled(value: boolean): void {
   editor.setGlobalState("globalComposeEnabled", value);

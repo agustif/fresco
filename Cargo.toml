@@ -1,6 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
+    "vendor/xai-grok-markdown",
+    "vendor/xai-grok-markdown-core",
     "crates/fresh-editor",
     "crates/fresh-editor-core",
     "crates/fresh-ui",
@@ -44,8 +46,8 @@ version = "0.5.2"
 authors = ["Noam Lewis"]
 edition = "2021"
 license = "GPL-3.0-or-later"
-repository = "https://github.com/sinelaw/fresh"
-homepage = "https://sinelaw.github.io/fresh/"
+repository = "https://github.com/agustif/fresco"
+homepage = "https://github.com/agustif/fresco"
 documentation = "https://docs.rs/fresh-editor"
 
 [workspace.dependencies]
@@ -130,11 +132,15 @@ ts-rs = { version = "12.0", features = ["serde_json", "no-serde-warnings"] }
 #
 # `debug-assertions` and `overflow-checks` are unaffected and stay on --
 # this changes what the compiler *records*, not what it *checks*.
+# Explicitly disable implicit debuginfo stripping: Rust 1.95 can produce
+# misaligned proc-macro dylibs rejected by macOS 27 (rust-lang/rust#157750).
 [profile.dev]
 debug = 0
+strip = "none"
 
 [profile.release]
 debug = 0
+strip = "none"
 lto = "fat"
 codegen-units = 1
 opt-level = "z"

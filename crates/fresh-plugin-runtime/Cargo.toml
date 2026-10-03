@@ -9,6 +9,9 @@ homepage.workspace = true
 description = "JavaScript plugin runtime for Fresh editor"
 
 [dependencies]
+xai-grok-markdown = { path = "../../vendor/xai-grok-markdown" }
+anstyle = "1.0"
+ratatui = { version = "0.30", default-features = false, features = ["std"] }
 rquickjs.workspace = true
 rquickjs-serde.workspace = true
 serde.workspace = true

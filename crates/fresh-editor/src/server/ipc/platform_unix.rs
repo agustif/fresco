@@ -10,14 +10,14 @@ use interprocess::local_socket::{GenericFilePath, Stream as LocalStream, ToFsNam
 pub fn get_socket_dir() -> io::Result<PathBuf> {
     // Try XDG_RUNTIME_DIR first (preferred, usually /run/user/$UID)
     if let Ok(runtime_dir) = std::env::var("XDG_RUNTIME_DIR") {
-        let socket_dir = PathBuf::from(runtime_dir).join("fresh");
+        let socket_dir = PathBuf::from(runtime_dir).join("fresco");
         std::fs::create_dir_all(&socket_dir)?;
         return Ok(socket_dir);
     }
 
-    // Fallback to /tmp/fresh-$UID
+    // Fallback to /tmp/fresco-$UID
     let uid = unsafe { libc::getuid() };
-    let socket_dir = PathBuf::from(format!("/tmp/fresh-{}", uid));
+    let socket_dir = PathBuf::from(format!("/tmp/fresco-{}", uid));
     std::fs::create_dir_all(&socket_dir)?;
 
     // Ensure directory has correct permissions (owner-only)
