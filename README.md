@@ -20,8 +20,11 @@ styled headings, framed code blocks, and table borders. Open the command palette
 with **Ctrl+P**, then choose **Markdown: Toggle Compose/Preview** to switch back
 to source mode. The all-files toggle persists your compose preference.
 
-For a live reader alongside the editable source, choose
-**Fresco Markdown: Open Live Preview** in the command palette. This bundled
+Markdown files containing Mermaid automatically open a live reader alongside
+the editable source. You can also choose **Fresco Markdown: Open Live Preview**
+in the command palette. Disable automatic opening with **Plugin Settings →
+fresco_markdown → autoPreviewMermaid**. Closing a preview keeps it closed when
+you return to its source. This bundled
 plugin renders the whole document, including Mermaid fences, into a read-only
 pane. It refreshes after edits, undo/redo, saves, disk reloads, and pane resizes.
 Running the command again reuses the existing preview.

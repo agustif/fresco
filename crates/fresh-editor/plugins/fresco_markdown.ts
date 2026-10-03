@@ -2,6 +2,10 @@
 // Fresco's read-only live Markdown reader. Source buffers remain the editing authority.
 const editor = getEditor();
 editor.exportPluginApi("fresco-markdown", { defaultCompose: true });
+editor.defineConfigBoolean("autoPreviewMermaid", {
+  default: true,
+  description: "Automatically open the live preview when first viewing a Markdown file containing Mermaid diagrams.",
+});
 
 interface Preview {
   source: number;
@@ -12,6 +16,7 @@ interface Preview {
 }
 const previews = new Map<number, Preview>();
 const opening = new Set<number>();
+const autoConsidered = new Set<number>();
 const dirty = new Set<number>();
 const MAX_BYTES = 256 * 1024;
 let timer: number | null = null;
@@ -107,6 +112,38 @@ editor.registerCommand(
   "frescoMarkdownOpen",
 );
 
+// Consider each source once. Closing its preview is a deliberate choice and
+// returning to the source pane must never reopen it or steal editing focus.
+async function autoPreview(bufferId: number): Promise<void> {
+  const settings = editor.getPluginConfig() as { autoPreviewMermaid?: boolean } | null;
+  if (settings?.autoPreviewMermaid === false || autoConsidered.has(bufferId)) return;
+  if (editor.getActiveBufferId() !== bufferId || previews.has(bufferId)) return;
+  const info = editor.getBufferInfo(bufferId);
+  if (!info || !/\.(md|markdown|mdown)$/i.test(info.path) || info.length > MAX_BYTES) return;
+  autoConsidered.add(bufferId);
+  try {
+    const source = await editor.getBufferText(bufferId);
+    if (editor.getActiveBufferId() !== bufferId) {
+      autoConsidered.delete(bufferId);
+      return;
+    }
+    if (!editor.getBufferInfo(bufferId) || previews.has(bufferId)) return;
+    if (/^ {0,3}(?:`{3,}|~{3,})mermaid\b/im.test(source)) await openPreview();
+  } catch (error) {
+    autoConsidered.delete(bufferId);
+    editor.debug(`Fresco Markdown automatic preview failed: ${String(error)}`);
+  }
+}
+registerHandler("frescoMarkdownAutoOpen", () => autoPreview(editor.getActiveBufferId()));
+editor.on("buffer_activated", (event) => autoPreview(event.buffer_id));
+editor.on("after_file_open", (event) => autoPreview(event.buffer_id));
+editor.on("config_changed", () => {
+  autoConsidered.clear();
+  return autoPreview(editor.getActiveBufferId());
+});
+// Covers a file already active when the plugin loads, including session restore.
+editor.setTimeout(0, "frescoMarkdownAutoOpen");
+
 editor.on("after_insert", (event) => schedule(event.buffer_id));
 editor.on("after_delete", (event) => schedule(event.buffer_id));
 editor.on("buffer_modified", (event) => schedule(event.buffer_id));
@@ -117,6 +154,7 @@ editor.on("viewport_changed", (event) => {
   if (preview && previewWidth(preview) !== preview.width) schedule(preview.source);
 });
 editor.on("buffer_closed", (event) => {
+  autoConsidered.delete(event.buffer_id);
   for (const [source, preview] of previews) {
     if (source === event.buffer_id || preview.buffer === event.buffer_id) {
       preview.revision++;
